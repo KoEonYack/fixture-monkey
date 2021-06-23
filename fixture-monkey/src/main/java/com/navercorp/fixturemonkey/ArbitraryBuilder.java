@@ -94,13 +94,19 @@ public final class ArbitraryBuilder<T> {
 		ArbitraryTraverser traverser,
 		ArbitraryGenerator generator,
 		ArbitraryValidator validator,
-		ArbitraryCustomizers arbitraryCustomizers
+		ArbitraryCustomizers arbitraryCustomizers,
+		List<PreArbitraryManipulator> preArbitraryManipulators,
+		List<PostArbitraryManipulator> postArbitraryManipulators,
+		List<MetadataManipulator> metadataManipulators
 	) {
 		this.tree = tree;
 		this.traverser = traverser;
 		this.generator = generator;
 		this.validator = validator;
 		this.arbitraryCustomizers = arbitraryCustomizers;
+		this.preArbitraryManipulators.addAll(preArbitraryManipulators);
+		this.postArbitraryManipulators.addAll(postArbitraryManipulators);
+		this.metadataManipulators.addAll(metadataManipulators);
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -280,7 +286,10 @@ public final class ArbitraryBuilder<T> {
 			this.traverser,
 			this.generator,
 			this.validator,
-			this.arbitraryCustomizers
+			this.arbitraryCustomizers,
+			this.preArbitraryManipulators.stream().map(PreArbitraryManipulator::copy).collect(toList()),
+			this.postArbitraryManipulators.stream().map(PostArbitraryManipulator::copy).collect(toList()),
+			this.metadataManipulators.stream().map(MetadataManipulator::copy).collect(toList())
 		);
 	}
 

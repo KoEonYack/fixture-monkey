@@ -599,6 +599,22 @@ class FixtureMonkeyTest {
 	}
 
 	@Property
+	void copyWithManipulator() {
+		IntegerArrayClass expected = new IntegerArrayClass(new Integer[] {1, 2, 3});
+
+		ArbitraryBuilder<IntegerArrayClass> builder = this.sut.giveMeBuilder(expected)
+			.set("value[0]", -1);
+		ArbitraryBuilder<IntegerArrayClass> copiedBuilder = builder.copy();
+
+		IntegerArrayClass actual = builder.sample();
+		IntegerArrayClass copied = copiedBuilder.sample();
+
+		then(actual.value[0]).isEqualTo(copied.value[0]);
+		then(actual.value[1]).isEqualTo(copied.value[1]);
+		then(actual.value[2]).isEqualTo(copied.value[2]);
+	}
+
+	@Property
 	void giveMeFilterLimitIndex() {
 		StringListClass actual = this.sut.giveMeBuilder(StringListClass.class)
 			.size("values", 2, 2)
