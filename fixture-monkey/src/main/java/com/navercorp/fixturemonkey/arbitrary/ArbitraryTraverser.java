@@ -19,11 +19,10 @@ import org.junit.platform.commons.util.ReflectionUtils;
 import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import com.navercorp.fixturemonkey.ArbitraryOption;
 import com.navercorp.fixturemonkey.generator.AnnotatedArbitraryGenerator;
 import com.navercorp.fixturemonkey.generator.AnnotationSource;
+import com.navercorp.fixturemonkey.generator.FieldNameResolver;
 
 public final class ArbitraryTraverser {
 	public static final ArbitraryTraverser INSTANCE = new ArbitraryTraverser(ArbitraryOption.DEFAULT_FIXTURE_OPTIONS);
@@ -36,7 +35,8 @@ public final class ArbitraryTraverser {
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	public <T> void traverse(
 		ArbitraryNode<T> node,
-		boolean keyOfMapStructure
+		boolean keyOfMapStructure,
+		FieldNameResolver fieldNameResolver
 	) {
 		node.getChildren().clear();
 		ArbitraryType<T> currentNodeType = node.getType();
@@ -51,11 +51,15 @@ public final class ArbitraryTraverser {
 				ArbitraryType arbitraryType = getFixtureType(field);
 				double nullInject = arbitraryOption.getNullInject();
 				boolean nullable = isNullableField(field);
-				Object nextValue = value == null ? null : extractValue(value, field);
+				Object nextValue = null;
+				if (value != null) {
+					nextValue = extractValue(value, field);
+					nullable = false;
+				}
 
 				ArbitraryNode<?> nextFrame = ArbitraryNode.builder()
 					.type(arbitraryType)
-					.fieldName(resolveFieldName(field))
+					.fieldName(fieldNameResolver.resolveFieldName(field))
 					.nullable(nullable)
 					.nullInject(nullInject)
 					.keyOfMapStructure(keyOfMapStructure)
@@ -63,7 +67,7 @@ public final class ArbitraryTraverser {
 					.build();
 
 				node.addChildNode(nextFrame);
-				traverse(nextFrame, false);
+				traverse(nextFrame, false, fieldNameResolver);
 			}
 		} else {
 			if (!currentNodeType.isContainer() && value != null) {
@@ -77,11 +81,11 @@ public final class ArbitraryTraverser {
 						node.setArbitrary(Arbitraries.just(value));
 						return;
 					}
-					mapArbitrary(node);
+					mapArbitrary(node, fieldNameResolver);
 				} else if (currentNodeType.isArray()) {
-					arrayArbitrary(node);
+					arrayArbitrary(node, fieldNameResolver);
 				} else {
-					containerArbitrary((ArbitraryNode<? extends Collection>)node);
+					containerArbitrary((ArbitraryNode<? extends Collection>)node, fieldNameResolver);
 				}
 			} else if (clazz.isEnum()) {
 				Arbitrary<T> arbitrary = (Arbitrary<T>)Arbitraries.of((Class<Enum>)clazz);
@@ -151,7 +155,10 @@ public final class ArbitraryTraverser {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T, U> void containerArbitrary(ArbitraryNode<T> currentNode) {
+	private <T, U> void containerArbitrary(
+		ArbitraryNode<T> currentNode,
+		FieldNameResolver fieldNameResolver
+	) {
 		ArbitraryType<T> clazz = currentNode.getType();
 		String fieldName = currentNode.getFieldName();
 
@@ -177,7 +184,7 @@ public final class ArbitraryTraverser {
 						.indexOfIterable(index)
 						.build();
 					currentNode.addChildNode(nextNode);
-					traverse(nextNode, false);
+					traverse(nextNode, false, fieldNameResolver);
 					index++;
 				}
 				return;
@@ -198,13 +205,12 @@ public final class ArbitraryTraverser {
 				.build();
 
 			currentNode.addChildNode(genericFrame);
-			traverse(genericFrame, false);
+			traverse(genericFrame, false, fieldNameResolver);
 		}
-
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T, U> void arrayArbitrary(ArbitraryNode<T> currentNode) {
+	private <T, U> void arrayArbitrary(ArbitraryNode<T> currentNode, FieldNameResolver fieldNameResolver) {
 		ArbitraryType<T> clazz = currentNode.getType();
 		String fieldName = currentNode.getFieldName();
 
@@ -222,7 +228,7 @@ public final class ArbitraryTraverser {
 					.value(nextValue)
 					.build();
 				currentNode.addChildNode(nextNode);
-				traverse(nextNode, false);
+				traverse(nextNode, false, fieldNameResolver);
 			}
 			return;
 		}
@@ -241,11 +247,11 @@ public final class ArbitraryTraverser {
 				.build();
 
 			currentNode.addChildNode(genericFrame);
-			traverse(genericFrame, false);
+			traverse(genericFrame, false, fieldNameResolver);
 		}
 	}
 
-	private <T, K, V> void mapArbitrary(ArbitraryNode<T> currentNode) {
+	private <T, K, V> void mapArbitrary(ArbitraryNode<T> currentNode, FieldNameResolver fieldNameResolver) {
 		ArbitraryType<T> clazz = currentNode.getType();
 		String fieldName = currentNode.getFieldName();
 
@@ -271,7 +277,7 @@ public final class ArbitraryTraverser {
 				.build();
 
 			currentNode.addChildNode(keyFrame);
-			traverse(keyFrame, true);
+			traverse(keyFrame, true, fieldNameResolver);
 
 			ArbitraryNode<V> valueFrame = ArbitraryNode.<V>builder()
 				.type(valueType)
@@ -282,7 +288,7 @@ public final class ArbitraryTraverser {
 				.build();
 
 			currentNode.addChildNode(valueFrame);
-			traverse(valueFrame, false);
+			traverse(valueFrame, false, fieldNameResolver);
 		}
 	}
 
@@ -301,14 +307,5 @@ public final class ArbitraryTraverser {
 			&& !type.isContainer()
 			&& !type.isOptional()
 			&& !type.isEnum();
-	}
-
-	private String resolveFieldName(Field field) {
-		JsonProperty jsonProperty = field.getAnnotation(JsonProperty.class);
-		if (jsonProperty == null) {
-			return field.getName();
-		} else {
-			return jsonProperty.value();
-		}
 	}
 }

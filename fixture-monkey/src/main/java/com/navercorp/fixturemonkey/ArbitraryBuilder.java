@@ -66,7 +66,7 @@ public final class ArbitraryBuilder<T> {
 		);
 		this.generator = generator;
 		this.traverser = fixtureTraverser;
-		this.traverser.traverse(tree.getHead(), false);
+		this.traverser.traverse(this.tree.getHead(), false, this.generator);
 		this.validator = validator;
 		this.arbitraryCustomizers = arbitraryCustomizers;
 	}
@@ -121,7 +121,7 @@ public final class ArbitraryBuilder<T> {
 		this.traverser = traverser;
 		this.tree = new ArbitraryTree<>(node);
 		this.generator = generator;
-		this.traverser.traverse(node, false);
+		this.traverser.traverse(node, false, this.generator);
 		this.validator = validator;
 		this.arbitraryCustomizers = arbitraryCustomizers;
 
@@ -134,7 +134,7 @@ public final class ArbitraryBuilder<T> {
 
 	public ArbitraryBuilder<T> generator(ArbitraryGenerator generator) {
 		this.generator = generator;
-		this.traverser.traverse(this.tree.getHead(), false);
+		this.traverser.traverse(this.tree.getHead(), false, this.generator);
 		return this;
 	}
 
@@ -255,7 +255,7 @@ public final class ArbitraryBuilder<T> {
 				throw new IllegalArgumentException("Only Container can set size");
 			}
 			foundNode.setContainerSizeConstraint(new ContainerSizeConstraint(min, max));
-			traverser.traverse(foundNode, false); // regenerate subtree
+			traverser.traverse(foundNode, false, generator); // regenerate subtree
 		}
 		return this;
 	}
