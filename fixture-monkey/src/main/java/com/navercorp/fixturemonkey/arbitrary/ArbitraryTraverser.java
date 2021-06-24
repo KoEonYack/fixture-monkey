@@ -44,11 +44,14 @@ public final class ArbitraryTraverser {
 		List<Field> fields = ReflectionUtils.findFields(clazz, this::availableField,
 			ReflectionUtils.HierarchyTraversalMode.TOP_DOWN);
 
+		T value = node.getValue();
+
 		if (isTraversable(currentNodeType)) {
 			for (Field field : fields) {
 				ArbitraryType arbitraryType = getFixtureType(field);
 				double nullInject = arbitraryOption.getNullInject();
 				boolean nullable = isNullableField(field);
+				Object nextValue = value == null ? null : extractValue(value, field);
 
 				ArbitraryNode<?> nextFrame = ArbitraryNode.builder()
 					.type(arbitraryType)
@@ -56,17 +59,24 @@ public final class ArbitraryTraverser {
 					.nullable(nullable)
 					.nullInject(nullInject)
 					.keyOfMapStructure(keyOfMapStructure)
+					.value(nextValue)
 					.build();
 
 				node.addChildNode(nextFrame);
 				traverse(nextFrame, false);
 			}
 		} else {
-			if (arbitraryOption.isDefaultArbitraryType(currentNodeType.getType())) {
+			if (!currentNodeType.isContainer() && value != null) {
+				node.setArbitrary(Arbitraries.just(value));
+			} else if (arbitraryOption.isDefaultArbitraryType(currentNodeType.getType())) {
 				Arbitrary<T> registeredArbitrary = registeredArbitrary(node);
 				node.setArbitrary(registeredArbitrary);
 			} else if (currentNodeType.isContainer()) {
 				if (currentNodeType.isMap() || currentNodeType.isMapEntry()) {
+					if (value != null) {
+						node.setArbitrary(Arbitraries.just(value));
+						return;
+					}
 					mapArbitrary(node);
 				} else if (currentNodeType.isArray()) {
 					arrayArbitrary(node);
@@ -80,73 +90,6 @@ public final class ArbitraryTraverser {
 				node.setArbitrary(Arbitraries.just(null));
 			}
 			// TODO: noGeneric
-		}
-	}
-
-	@SuppressWarnings({"rawtypes", "unchecked"})
-	public <T> void decompose(
-		Object value,
-		ArbitraryNode<T> node
-	) {
-		node.getChildren().clear();
-		ArbitraryType<T> currentNodeType = node.getType();
-		Class<?> clazz = currentNodeType.getType();
-		List<Field> fields = ReflectionUtils.findFields(clazz, this::availableField,
-			ReflectionUtils.HierarchyTraversalMode.TOP_DOWN);
-		node.setArbitrary((Arbitrary<T>)Arbitraries.just(value));
-		if (isTraversable(currentNodeType)) {
-			for (Field field : fields) {
-				ArbitraryType arbitraryType = getFixtureType(field);
-				Object currentValue = extractValue(value, field);
-
-				ArbitraryNode<?> nextFrame = ArbitraryNode.builder()
-					.type(arbitraryType)
-					.fieldName(resolveFieldName(field))
-					.build();
-
-				node.addChildNode(nextFrame);
-				decompose(currentValue, nextFrame);
-			}
-		} else {
-			if (currentNodeType.isContainer()) {
-				if (value instanceof Collection || value instanceof Iterator) {
-					Iterator iterator;
-
-					if (value instanceof Collection) {
-						iterator = ((Collection<?>)value).iterator();
-					} else {
-						iterator = (Iterator)value;
-					}
-					int index = 0;
-					while (iterator.hasNext()) {
-						Object nextObject = iterator.next();
-						ArbitraryType childType = currentNodeType.getGenericFixtureType(0);
-						ArbitraryNode<?> genericFrame = ArbitraryNode.builder()
-							.type(childType)
-							.fieldName(node.getFieldName())
-							.indexOfIterable(index)
-							.arbitrary(Arbitraries.just(nextObject))
-							.build();
-						node.addChildNode(genericFrame);
-						decompose(nextObject, genericFrame);
-						index++;
-					}
-				} else if (currentNodeType.isArray()) {
-					int length = Array.getLength(value);
-					for (int i = 0; i < length; i++) {
-						Object nextObject = Array.get(value, i);
-						ArbitraryType childType = currentNodeType.getArrayFixtureType();
-						ArbitraryNode<?> genericFrame = ArbitraryNode.builder()
-							.type(childType)
-							.fieldName(node.getFieldName())
-							.indexOfIterable(i)
-							.arbitrary(Arbitraries.just(nextObject))
-							.build();
-						node.addChildNode(genericFrame);
-						decompose(nextObject, genericFrame);
-					}
-				}
-			}
 		}
 	}
 
@@ -207,11 +150,39 @@ public final class ArbitraryTraverser {
 			.orElseThrow(() -> new IllegalArgumentException("Class is not registered " + clazz.getName()));
 	}
 
-	private <T extends Collection<U>, U> void containerArbitrary(ArbitraryNode<T> currentNode) {
+	@SuppressWarnings("unchecked")
+	private <T, U> void containerArbitrary(ArbitraryNode<T> currentNode) {
 		ArbitraryType<T> clazz = currentNode.getType();
 		String fieldName = currentNode.getFieldName();
 
 		ArbitraryType<U> childType = clazz.getGenericFixtureType(0);
+
+		T value = currentNode.getValue();
+
+		if (value != null) {
+			Iterator<U> iterator;
+			if (value instanceof Collection || value instanceof Iterator) {
+				if (value instanceof Collection) {
+					iterator = ((Collection<U>)value).iterator();
+				} else {
+					iterator = (Iterator<U>)value;
+				}
+				int index = 0;
+				while (iterator.hasNext()) {
+					U nextObject = iterator.next();
+					ArbitraryNode<U> nextNode = ArbitraryNode.<U>builder()
+						.type(childType)
+						.value(nextObject)
+						.fieldName(fieldName)
+						.indexOfIterable(index)
+						.build();
+					currentNode.addChildNode(nextNode);
+					traverse(nextNode, false);
+					index++;
+				}
+				return;
+			}
+		}
 
 		currentNode.initializeElementSize();
 
@@ -229,13 +200,32 @@ public final class ArbitraryTraverser {
 			currentNode.addChildNode(genericFrame);
 			traverse(genericFrame, false);
 		}
+
 	}
 
+	@SuppressWarnings("unchecked")
 	private <T, U> void arrayArbitrary(ArbitraryNode<T> currentNode) {
 		ArbitraryType<T> clazz = currentNode.getType();
 		String fieldName = currentNode.getFieldName();
 
 		ArbitraryType<U> childType = clazz.getArrayFixtureType();
+
+		T value = currentNode.getValue();
+		if (value != null) {
+			int length = Array.getLength(value);
+			for (int i = 0; i < length; i++) {
+				U nextValue = (U)Array.get(value, i);
+				ArbitraryNode<U> nextNode = ArbitraryNode.<U>builder()
+					.type(childType)
+					.fieldName(fieldName)
+					.indexOfIterable(i)
+					.value(nextValue)
+					.build();
+				currentNode.addChildNode(nextNode);
+				traverse(nextNode, false);
+			}
+			return;
+		}
 
 		currentNode.initializeElementSize();
 

@@ -25,6 +25,7 @@ public final class ArbitraryNode<T> {
 	private final String fieldName;
 	private final String metadata;
 	private final int indexOfIterable;
+	private final T value;
 	private final FixtureNodeStatus<T> status;
 	private final boolean keyOfMapStructure;
 	private final double nullInject;
@@ -36,6 +37,7 @@ public final class ArbitraryNode<T> {
 		String fieldName,
 		String metadata,
 		int indexOfIterable,
+		T value,
 		FixtureNodeStatus<T> status,
 		boolean keyOfMapStructure,
 		double nullInject
@@ -47,6 +49,7 @@ public final class ArbitraryNode<T> {
 		this.metadata = metadata;
 		this.indexOfIterable = indexOfIterable;
 		this.status = status.copy();
+		this.value = value;
 		this.keyOfMapStructure = keyOfMapStructure;
 		this.nullInject = nullInject;
 	}
@@ -231,6 +234,10 @@ public final class ArbitraryNode<T> {
 
 	public boolean isFixed() {
 		return getStatus().isFixed();
+	}
+
+	public T getValue() {
+		return value;
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -437,6 +444,8 @@ public final class ArbitraryNode<T> {
 		private String fieldName = HEAD_NAME;
 		private String metadata = "";
 		private int indexOfIterable = NO_OR_ALL_INDEX_INTEGER_VALUE;
+		@Nullable
+		private T value = null;
 		private FixtureNodeStatus<T> status = new FixtureNodeStatus<>();
 		private boolean keyOfMapStructure = false;
 		private double nullInject = 0.3f;
@@ -498,6 +507,11 @@ public final class ArbitraryNode<T> {
 			return this;
 		}
 
+		public FixtureNodeBuilder<T> value(T value) {
+			this.value = value;
+			return this;
+		}
+
 		public ArbitraryNode<T> build() {
 			return new ArbitraryNode<>(
 				children,
@@ -505,6 +519,7 @@ public final class ArbitraryNode<T> {
 				fieldName,
 				metadata,
 				indexOfIterable,
+				value,
 				status,
 				keyOfMapStructure,
 				nullInject

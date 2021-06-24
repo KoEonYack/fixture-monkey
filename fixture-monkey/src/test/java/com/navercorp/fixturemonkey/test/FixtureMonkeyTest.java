@@ -776,8 +776,7 @@ class FixtureMonkeyTest {
 			.build()
 			.sample();
 
-		then(actual.getValue()).isNotNull();
-		then(actual.getValue()).isInstanceOf(String.class);
+		then(actual).isNotNull();
 	}
 
 	@Property

@@ -60,12 +60,13 @@ public final class ArbitraryBuilder<T> {
 		this.tree = new ArbitraryTree<>(
 			ArbitraryNode.builder()
 				.type(new ArbitraryType(value.getClass()))
+				.value(value)
 				.fieldName("HEAD_NAME")
 				.build()
 		);
-		this.traverser = fixtureTraverser;
-		this.traverser.decompose(value, tree.getHead());
 		this.generator = generator;
+		this.traverser = fixtureTraverser;
+		this.traverser.traverse(tree.getHead(), false);
 		this.validator = validator;
 		this.arbitraryCustomizers = arbitraryCustomizers;
 	}
@@ -118,9 +119,9 @@ public final class ArbitraryBuilder<T> {
 		ArbitraryCustomizers arbitraryCustomizers
 	) {
 		this.traverser = traverser;
-		this.traverser.traverse(node, false);
 		this.tree = new ArbitraryTree<>(node);
 		this.generator = generator;
+		this.traverser.traverse(node, false);
 		this.validator = validator;
 		this.arbitraryCustomizers = arbitraryCustomizers;
 
@@ -131,8 +132,10 @@ public final class ArbitraryBuilder<T> {
 		return this;
 	}
 
-	public void generator(ArbitraryGenerator generator) {
+	public ArbitraryBuilder<T> generator(ArbitraryGenerator generator) {
 		this.generator = generator;
+		this.traverser.traverse(this.tree.getHead(), false);
+		return this;
 	}
 
 	@SuppressWarnings("unchecked")
