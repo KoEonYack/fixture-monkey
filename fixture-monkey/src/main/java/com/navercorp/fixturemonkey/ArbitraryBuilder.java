@@ -227,6 +227,12 @@ public final class ArbitraryBuilder<T> {
 		return this;
 	}
 
+	public ArbitraryBuilder<T> size(String expression, int size) {
+		ArbitraryExpression arbitraryExpression = ArbitraryExpression.from(expression);
+		metadataManipulators.add(new ContainerSizeManipulator(arbitraryExpression, size, size));
+		return this;
+	}
+
 	public ArbitraryBuilder<T> size(String expression, int min, int max) {
 		ArbitraryExpression arbitraryExpression = ArbitraryExpression.from(expression);
 		metadataManipulators.add(new ContainerSizeManipulator(arbitraryExpression, min, max));

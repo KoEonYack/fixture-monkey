@@ -901,6 +901,15 @@ class FixtureMonkeyTest {
 		then(actual.values.size()).isBetween(1, 3);
 	}
 
+	@Property
+	void giveMeListExactSize() {
+		StringListClass actual = this.sut.giveMeBuilder(StringListClass.class)
+			.size("values", 3)
+			.sample();
+
+		then(actual.values.size()).isEqualTo(3);
+	}
+
 	@Data
 	public static class IntegerWrapperClass {
 		int value;
