@@ -305,7 +305,7 @@ public final class ArbitraryNode<T> {
 	}
 
 	private boolean matchExpression(Cursor cursor) {
-		boolean sameName = cursor.getName().equals(this.getFieldName());
+		boolean sameName = cursor.nameEquals(this.getFieldName());
 		boolean sameIndex = cursor.indexEquals(indexOfIterable);
 		return sameName && sameIndex;
 	}

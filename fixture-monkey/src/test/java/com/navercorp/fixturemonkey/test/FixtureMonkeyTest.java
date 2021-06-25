@@ -26,7 +26,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Value;
 
 import com.navercorp.fixturemonkey.ArbitraryBuilder;
 import com.navercorp.fixturemonkey.ArbitraryOption;
@@ -902,6 +901,16 @@ class FixtureMonkeyTest {
 	}
 
 	@Property
+	void giveMeSetAllName() {
+		TwoStringClass actual = this.sut.giveMeBuilder(TwoStringClass.class)
+			.set("*", "set")
+			.sample();
+
+		then(actual.value1).isEqualTo("set");
+		then(actual.value2).isEqualTo("set");
+	}
+
+	@Property
 	void giveMeListExactSize() {
 		StringListClass actual = this.sut.giveMeBuilder(StringListClass.class)
 			.size("values", 3)
@@ -1049,5 +1058,11 @@ class FixtureMonkeyTest {
 	public static class OptionalClass {
 		@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 		private Optional<Integer> value;
+	}
+
+	@Data
+	public static class TwoStringClass {
+		private String value1;
+		private String value2;
 	}
 }
