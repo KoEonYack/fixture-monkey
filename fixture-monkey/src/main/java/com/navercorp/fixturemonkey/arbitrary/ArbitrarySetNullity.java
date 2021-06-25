@@ -41,6 +41,11 @@ public final class ArbitrarySetNullity<T> implements PreArbitraryManipulator<T> 
 	}
 
 	@Override
+	public ArbitrarySetNullity<T> copy() {
+		return new ArbitrarySetNullity<>(this.fixtureExpression, this.toNull);
+	}
+
+	@Override
 	public boolean equals(Object obj) {
 		if (this == obj) {
 			return true;
@@ -55,10 +60,5 @@ public final class ArbitrarySetNullity<T> implements PreArbitraryManipulator<T> 
 	@Override
 	public int hashCode() {
 		return Objects.hash(fixtureExpression, toNull);
-	}
-
-	@Override
-	public ArbitrarySetNullity<T> copy() {
-		return new ArbitrarySetNullity<>(this.fixtureExpression, this.toNull);
 	}
 }

@@ -146,25 +146,6 @@ public final class ArbitraryType<T> {
 		return annotatedType;
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null || getClass() != obj.getClass()) {
-			return false;
-		}
-		ArbitraryType<?> that = (ArbitraryType<?>)obj;
-		return type.equals(that.type)
-			&& Objects.equals(annotatedType, that.annotatedType)
-			&& annotations.equals(that.annotations);
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(type, annotatedType, annotations);
-	}
-
 	private Optional<AnnotatedType> findGenericAnnotatedType(int index) {
 		if (annotatedType == null) {
 			return Optional.empty();
@@ -191,5 +172,24 @@ public final class ArbitraryType<T> {
 		}
 
 		return (Class<?>)annotatedType.getType();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || getClass() != obj.getClass()) {
+			return false;
+		}
+		ArbitraryType<?> that = (ArbitraryType<?>)obj;
+		return type.equals(that.type)
+			&& Objects.equals(annotatedType, that.annotatedType)
+			&& annotations.equals(that.annotations);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(type, annotatedType, annotations);
 	}
 }

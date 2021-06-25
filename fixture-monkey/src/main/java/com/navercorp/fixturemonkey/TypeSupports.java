@@ -8,7 +8,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-public class TypeSupports {
+public final class TypeSupports {
 	private TypeSupports() {
 	}
 

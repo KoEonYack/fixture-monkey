@@ -2,7 +2,7 @@ package com.navercorp.fixturemonkey;
 
 import com.navercorp.fixturemonkey.arbitrary.ArbitraryExpression.ExpIndex;
 
-public class Constants {
+public final class Constants {
 	public static final int DEFAULT_ELEMENT_MIN_SIZE = 0;
 	public static final int DEFAULT_ELEMENT_MIN_LIMIT = 0;
 	public static final int DEFAULT_ELEMENT_MAX_SIZE = 3;

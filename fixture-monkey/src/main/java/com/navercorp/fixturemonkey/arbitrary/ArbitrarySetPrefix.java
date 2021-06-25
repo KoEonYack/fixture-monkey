@@ -32,6 +32,11 @@ public final class ArbitrarySetPrefix extends AbstractArbitrarySet<String> {
 	}
 
 	@Override
+	public ArbitrarySetPrefix copy() {
+		return new ArbitrarySetPrefix(this.getArbitraryExpression(), this.value);
+	}
+
+	@Override
 	public boolean equals(Object obj) {
 		if (this == obj) {
 			return true;
@@ -49,10 +54,5 @@ public final class ArbitrarySetPrefix extends AbstractArbitrarySet<String> {
 	@Override
 	public int hashCode() {
 		return Objects.hash(super.hashCode(), value);
-	}
-
-	@Override
-	public ArbitrarySetPrefix copy() {
-		return new ArbitrarySetPrefix(this.getArbitraryExpression(), this.value);
 	}
 }

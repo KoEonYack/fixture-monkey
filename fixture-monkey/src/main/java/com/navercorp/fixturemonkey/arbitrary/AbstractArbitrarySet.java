@@ -21,6 +21,11 @@ public abstract class AbstractArbitrarySet<T> implements PreArbitraryManipulator
 		return arbitraryExpression;
 	}
 
+	@Override
+	public final void accept(ArbitraryBuilder<T> arbitraryBuilder) {
+		arbitraryBuilder.apply(this);
+	}
+
 	public abstract Object getValue();
 
 	@Override
@@ -33,11 +38,6 @@ public abstract class AbstractArbitrarySet<T> implements PreArbitraryManipulator
 		}
 		AbstractArbitrarySet<?> that = (AbstractArbitrarySet<?>)obj;
 		return arbitraryExpression.equals(that.arbitraryExpression);
-	}
-
-	@Override
-	public final void accept(ArbitraryBuilder<T> arbitraryBuilder) {
-		arbitraryBuilder.apply(this);
 	}
 
 	@Override

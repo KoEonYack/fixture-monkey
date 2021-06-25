@@ -10,7 +10,7 @@ import javax.annotation.Nullable;
 import com.navercorp.fixturemonkey.generator.BuilderFieldArbitraries;
 import com.navercorp.fixturemonkey.generator.FieldArbitraries;
 
-public class ArbitraryCustomizers {
+public final class ArbitraryCustomizers {
 	private final Map<Class<?>, ArbitraryCustomizer<?>> customizerMap;
 
 	public ArbitraryCustomizers() {
@@ -67,5 +67,4 @@ public class ArbitraryCustomizers {
 
 		return new ArbitraryCustomizers(mergedCustomizer);
 	}
-	// TODO: 제거
 }

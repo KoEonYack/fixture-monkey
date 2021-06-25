@@ -96,7 +96,7 @@ public final class ArbitraryNode<T> {
 		return Optional.empty();
 	}
 
-	public <U> void initializeElementSize() {
+	public void initializeElementSize() {
 		if (!type.isContainer()) {
 			throw new IllegalStateException("Can not initialize element size because node is not container.");
 		}
@@ -261,28 +261,6 @@ public final class ArbitraryNode<T> {
 			.build();
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null || getClass() != obj.getClass()) {
-			return false;
-		}
-		ArbitraryNode<?> that = (ArbitraryNode<?>)obj;
-		return indexOfIterable == that.indexOfIterable
-			&& keyOfMapStructure == that.keyOfMapStructure && Double.compare(that.nullInject, nullInject) == 0
-			&& children.equals(that.children) && type.equals(that.type) && fieldName.equals(that.fieldName)
-			&& metadata.equals(that.metadata) && status.equals(that.status);
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(
-			children, type, fieldName, metadata, indexOfIterable, status, keyOfMapStructure, nullInject
-		);
-	}
-
 	<U> void update(ArbitraryNode<U> entryNode, ArbitraryGenerator generator) {
 		if (!entryNode.isLeafNode() && !entryNode.isFixed()) {
 			for (ArbitraryNode<?> nextChild : entryNode.getChildren()) {
@@ -318,6 +296,28 @@ public final class ArbitraryNode<T> {
 		return status;
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || getClass() != obj.getClass()) {
+			return false;
+		}
+		ArbitraryNode<?> that = (ArbitraryNode<?>)obj;
+		return indexOfIterable == that.indexOfIterable
+			&& keyOfMapStructure == that.keyOfMapStructure && Double.compare(that.nullInject, nullInject) == 0
+			&& children.equals(that.children) && type.equals(that.type) && fieldName.equals(that.fieldName)
+			&& metadata.equals(that.metadata) && status.equals(that.status);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(
+			children, type, fieldName, metadata, indexOfIterable, status, keyOfMapStructure, nullInject
+		);
+	}
+
 	private static final class FixtureNodeStatus<T> {
 		@Nullable
 		private Arbitrary<T> arbitrary = null; // immutable
@@ -329,7 +329,7 @@ public final class ArbitraryNode<T> {
 		private boolean active = true;
 		private boolean fixed = false;
 
-		public FixtureNodeStatus() {
+		private FixtureNodeStatus() {
 		}
 
 		private FixtureNodeStatus(
@@ -408,6 +408,16 @@ public final class ArbitraryNode<T> {
 			this.fixed = fixed;
 		}
 
+		public FixtureNodeStatus<T> copy() {
+			return new FixtureNodeStatus<>(
+				this.getArbitrary(),
+				this.getContainerSizeConstraint(),
+				this.isNullable(),
+				this.isManipulated(),
+				this.isActive()
+			);
+		}
+
 		@Override
 		public boolean equals(Object obj) {
 			if (this == obj) {
@@ -423,16 +433,6 @@ public final class ArbitraryNode<T> {
 		@Override
 		public int hashCode() {
 			return Objects.hash(nullable, manipulated, active);
-		}
-
-		public FixtureNodeStatus<T> copy() {
-			return new FixtureNodeStatus<>(
-				this.getArbitrary(),
-				this.getContainerSizeConstraint(),
-				this.isNullable(),
-				this.isManipulated(),
-				this.isActive()
-			);
 		}
 	}
 

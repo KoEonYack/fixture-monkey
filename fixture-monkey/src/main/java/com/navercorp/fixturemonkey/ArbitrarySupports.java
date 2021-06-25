@@ -2,7 +2,7 @@ package com.navercorp.fixturemonkey;
 
 import java.util.function.Supplier;
 
-public class ArbitrarySupports {
+public final class ArbitrarySupports {
 	public static void unique(Runnable runnable) {
 		boolean isUniqueScope = ArbitraryGeneratorThreadLocal.isUniqueScope();
 		try {

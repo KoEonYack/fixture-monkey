@@ -4,7 +4,7 @@ import java.util.Objects;
 
 import com.navercorp.fixturemonkey.ArbitraryBuilder;
 
-public class ContainerSizeManipulator implements MetadataManipulator {
+public final class ContainerSizeManipulator implements MetadataManipulator {
 	private ArbitraryExpression arbitraryExpression;
 	private final int min;
 	private final int max;
@@ -39,6 +39,16 @@ public class ContainerSizeManipulator implements MetadataManipulator {
 	}
 
 	@Override
+	public Priority getPriority() {
+		return Priority.HIGH;
+	}
+
+	@Override
+	public ContainerSizeManipulator copy() {
+		return new ContainerSizeManipulator(this.arbitraryExpression, this.min, this.max);
+	}
+
+	@Override
 	public boolean equals(Object obj) {
 		if (this == obj) {
 			return true;
@@ -55,15 +65,5 @@ public class ContainerSizeManipulator implements MetadataManipulator {
 	@Override
 	public int hashCode() {
 		return Objects.hash(arbitraryExpression, min, max);
-	}
-
-	@Override
-	public Priority getPriority() {
-		return Priority.HIGH;
-	}
-
-	@Override
-	public ContainerSizeManipulator copy() {
-		return new ContainerSizeManipulator(this.arbitraryExpression, this.min, this.max);
 	}
 }
