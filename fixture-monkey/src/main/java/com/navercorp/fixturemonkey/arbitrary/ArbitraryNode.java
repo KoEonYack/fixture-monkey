@@ -12,6 +12,9 @@ import javax.annotation.Nullable;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
 
@@ -30,6 +33,7 @@ public final class ArbitraryNode<T> {
 	private final FixtureNodeStatus<T> status;
 	private final boolean keyOfMapStructure;
 	private final double nullInject;
+	private final Logger log = LoggerFactory.getLogger(this.getClass());
 
 	@SuppressWarnings("rawtypes")
 	public ArbitraryNode(
@@ -135,6 +139,14 @@ public final class ArbitraryNode<T> {
 	@SuppressWarnings("rawtypes")
 	public void apply(PreArbitraryManipulator<T> preArbitraryManipulator) {
 		if (preArbitraryManipulator instanceof AbstractArbitrarySet) {
+			Object toValue = ((AbstractArbitrarySet<T>)preArbitraryManipulator).getValue();
+			Class<?> clazz = this.getType().getType();
+			if (toValue.getClass() != clazz) {
+				log.warn("node type is \"{}\", given set value is \"{}\".",
+					toValue.getClass().getSimpleName(),
+					clazz.getSimpleName()
+				);
+			}
 			Arbitrary<T> appliedArbitrary = preArbitraryManipulator.apply(status.arbitrary);
 			this.setFixed(true);
 			this.setArbitrary(appliedArbitrary);
