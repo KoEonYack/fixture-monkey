@@ -1,8 +1,6 @@
 package com.navercorp.fixturemonkey.customizer;
 
-import static com.navercorp.fixturemonkey.Constants.DEFAULT_ELEMENT_MAX_LIMIT;
 import static com.navercorp.fixturemonkey.Constants.DEFAULT_ELEMENT_MAX_SIZE;
-import static com.navercorp.fixturemonkey.Constants.DEFAULT_ELEMENT_MIN_LIMIT;
 import static com.navercorp.fixturemonkey.Constants.DEFAULT_ELEMENT_MIN_SIZE;
 
 import java.util.ArrayList;
@@ -34,13 +32,13 @@ final class DefaultIterableSpec implements IterableSpec, ExpressionSpecVisitor {
 
 	@Override
 	public IterableSpec ofMinSize(int size) {
-		this.minSize = Math.max(size, DEFAULT_ELEMENT_MIN_LIMIT);
+		this.minSize = size;
 		return this;
 	}
 
 	@Override
 	public IterableSpec ofMaxSize(int size) {
-		this.maxSize = Math.min(size, DEFAULT_ELEMENT_MAX_LIMIT);
+		this.maxSize = size;
 		return this;
 	}
 
