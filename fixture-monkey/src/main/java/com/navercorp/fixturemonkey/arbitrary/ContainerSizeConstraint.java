@@ -34,4 +34,12 @@ public final class ContainerSizeConstraint {
 	public int getArbitraryElementSize() {
 		return Arbitraries.integers().between(getMinSize(), getMaxSize()).sample();
 	}
+
+	public ContainerSizeConstraint withMinSize(@Nullable Integer minSize) {
+		return new ContainerSizeConstraint(minSize, this.maxSize);
+	}
+
+	public ContainerSizeConstraint withMaxSize(@Nullable Integer maxSize) {
+		return new ContainerSizeConstraint(this.minSize, maxSize);
+	}
 }

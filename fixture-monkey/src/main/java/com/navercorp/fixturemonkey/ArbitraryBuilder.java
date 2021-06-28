@@ -24,8 +24,8 @@ import com.navercorp.fixturemonkey.arbitrary.ArbitrarySetNullity;
 import com.navercorp.fixturemonkey.arbitrary.ArbitraryTraverser;
 import com.navercorp.fixturemonkey.arbitrary.ArbitraryTree;
 import com.navercorp.fixturemonkey.arbitrary.ArbitraryType;
-import com.navercorp.fixturemonkey.arbitrary.ContainerSizeConstraint;
-import com.navercorp.fixturemonkey.arbitrary.ContainerSizeManipulator;
+import com.navercorp.fixturemonkey.arbitrary.ContainerMaxSizeManipulator;
+import com.navercorp.fixturemonkey.arbitrary.ContainerMinSizeManipulator;
 import com.navercorp.fixturemonkey.arbitrary.MetadataManipulator;
 import com.navercorp.fixturemonkey.arbitrary.PostArbitraryManipulator;
 import com.navercorp.fixturemonkey.arbitrary.PreArbitraryManipulator;
@@ -259,13 +259,27 @@ public final class ArbitraryBuilder<T> {
 
 	public ArbitraryBuilder<T> size(String expression, int size) {
 		ArbitraryExpression arbitraryExpression = ArbitraryExpression.from(expression);
-		metadataManipulators.add(new ContainerSizeManipulator(arbitraryExpression, size, size));
+		metadataManipulators.add(new ContainerMinSizeManipulator(arbitraryExpression, size));
+		metadataManipulators.add(new ContainerMaxSizeManipulator(arbitraryExpression, size));
 		return this;
 	}
 
 	public ArbitraryBuilder<T> size(String expression, int min, int max) {
 		ArbitraryExpression arbitraryExpression = ArbitraryExpression.from(expression);
-		metadataManipulators.add(new ContainerSizeManipulator(arbitraryExpression, min, max));
+		metadataManipulators.add(new ContainerMinSizeManipulator(arbitraryExpression, min));
+		metadataManipulators.add(new ContainerMaxSizeManipulator(arbitraryExpression, max));
+		return this;
+	}
+
+	public ArbitraryBuilder<T> minSize(String expression, int min) {
+		ArbitraryExpression arbitraryExpression = ArbitraryExpression.from(expression);
+		metadataManipulators.add(new ContainerMinSizeManipulator(arbitraryExpression, min));
+		return this;
+	}
+
+	public ArbitraryBuilder<T> maxSize(String expression, int max) {
+		ArbitraryExpression arbitraryExpression = ArbitraryExpression.from(expression);
+		metadataManipulators.add(new ContainerMaxSizeManipulator(arbitraryExpression, max));
 		return this;
 	}
 
@@ -280,17 +294,32 @@ public final class ArbitraryBuilder<T> {
 	}
 
 	@SuppressWarnings({"rawtypes", "unchecked"})
-	public ArbitraryBuilder<T> apply(ContainerSizeManipulator manipulator) {
+	public ArbitraryBuilder<T> apply(ContainerMinSizeManipulator manipulator) {
 		ArbitraryExpression arbitraryExpression = manipulator.getArbitraryExpression();
-		int min = manipulator.getMin();
-		int max = manipulator.getMax();
+		int size = manipulator.getSize();
 
 		Collection<ArbitraryNode> foundNodes = tree.findAll(arbitraryExpression);
 		for (ArbitraryNode foundNode : foundNodes) {
 			if (!foundNode.getType().isContainer()) {
 				throw new IllegalArgumentException("Only Container can set size");
 			}
-			foundNode.setContainerSizeConstraint(new ContainerSizeConstraint(min, max));
+			foundNode.setContainerMinSize(size);
+			traverser.traverse(foundNode, false, generator); // regenerate subtree
+		}
+		return this;
+	}
+
+	@SuppressWarnings({"rawtypes", "unchecked"})
+	public ArbitraryBuilder<T> apply(ContainerMaxSizeManipulator manipulator) {
+		ArbitraryExpression arbitraryExpression = manipulator.getArbitraryExpression();
+		int max = manipulator.getSize();
+
+		Collection<ArbitraryNode> foundNodes = tree.findAll(arbitraryExpression);
+		for (ArbitraryNode foundNode : foundNodes) {
+			if (!foundNode.getType().isContainer()) {
+				throw new IllegalArgumentException("Only Container can set size");
+			}
+			foundNode.setContainerMaxSize(max);
 			traverser.traverse(foundNode, false, generator); // regenerate subtree
 		}
 		return this;

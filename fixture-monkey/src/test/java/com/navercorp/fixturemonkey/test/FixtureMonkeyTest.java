@@ -971,6 +971,24 @@ class FixtureMonkeyTest {
 		then(result1).isNotEqualTo(result2);
 	}
 
+	@Property
+	void giveMeMinSize() {
+		IntegerListClass actual = this.sut.giveMeBuilder(IntegerListClass.class)
+			.minSize("values", 2)
+			.sample();
+
+		then(actual.values.size()).isGreaterThanOrEqualTo(2);
+	}
+
+	@Property
+	void giveMeMaxSize() {
+		IntegerListClass actual = this.sut.giveMeBuilder(IntegerListClass.class)
+			.maxSize("values", 10)
+			.sample();
+
+		then(actual.values.size()).isLessThanOrEqualTo(10);
+	}
+
 	@Data
 	public static class IntegerWrapperClass {
 		int value;

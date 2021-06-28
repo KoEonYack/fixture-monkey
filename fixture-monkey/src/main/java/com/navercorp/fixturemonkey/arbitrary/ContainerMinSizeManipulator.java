@@ -4,23 +4,17 @@ import java.util.Objects;
 
 import com.navercorp.fixturemonkey.ArbitraryBuilder;
 
-public final class ContainerSizeManipulator implements MetadataManipulator {
+public final class ContainerMinSizeManipulator implements MetadataManipulator {
 	private ArbitraryExpression arbitraryExpression;
-	private final int min;
-	private final int max;
+	private final int size;
 
-	public ContainerSizeManipulator(ArbitraryExpression arbitraryExpression, int min, int max) {
+	public ContainerMinSizeManipulator(ArbitraryExpression arbitraryExpression, int size) {
 		this.arbitraryExpression = arbitraryExpression;
-		this.min = min;
-		this.max = max;
+		this.size = size;
 	}
 
-	public int getMin() {
-		return min;
-	}
-
-	public int getMax() {
-		return max;
+	public int getSize() {
+		return size;
 	}
 
 	@Override
@@ -44,8 +38,8 @@ public final class ContainerSizeManipulator implements MetadataManipulator {
 	}
 
 	@Override
-	public ContainerSizeManipulator copy() {
-		return new ContainerSizeManipulator(this.arbitraryExpression, this.min, this.max);
+	public ContainerMinSizeManipulator copy() {
+		return new ContainerMinSizeManipulator(this.arbitraryExpression, this.size);
 	}
 
 	@Override
@@ -56,14 +50,13 @@ public final class ContainerSizeManipulator implements MetadataManipulator {
 		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
-		ContainerSizeManipulator that = (ContainerSizeManipulator)obj;
-		return min == that.min
-			&& max == that.max
+		ContainerMinSizeManipulator that = (ContainerMinSizeManipulator)obj;
+		return size == that.size
 			&& Objects.equals(arbitraryExpression, that.arbitraryExpression);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(arbitraryExpression, min, max);
+		return Objects.hash(arbitraryExpression, size);
 	}
 }

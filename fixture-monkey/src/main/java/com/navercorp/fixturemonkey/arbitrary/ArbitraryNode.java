@@ -171,6 +171,16 @@ public final class ArbitraryNode<T> {
 		this.getStatus().setActive(active);
 	}
 
+	public void setContainerMinSize(@Nullable Integer minSize) {
+		FixtureNodeStatus<T> status = this.getStatus();
+		status.setContainerSizeConstraint(status.getContainerSizeConstraint().withMinSize(minSize));
+	}
+
+	public void setContainerMaxSize(@Nullable Integer minSize) {
+		FixtureNodeStatus<T> status = this.getStatus();
+		status.setContainerSizeConstraint(status.getContainerSizeConstraint().withMaxSize(minSize));
+	}
+
 	public void setContainerSizeConstraint(ContainerSizeConstraint containerSizeConstraint) {
 		this.getStatus().setContainerSizeConstraint(containerSizeConstraint);
 	}
@@ -339,8 +349,7 @@ public final class ArbitraryNode<T> {
 	private static final class FixtureNodeStatus<T> {
 		@Nullable
 		private Arbitrary<T> arbitrary = null; // immutable
-		@Nullable
-		private ContainerSizeConstraint containerSizeConstraint = null; // immutable
+		private ContainerSizeConstraint containerSizeConstraint = new ContainerSizeConstraint(null, null); // immutable
 		private List<PostArbitraryManipulator<T>> postArbitraryManipulators = new ArrayList<>();
 		private boolean nullable = false;
 		private boolean manipulated = false;
@@ -352,7 +361,7 @@ public final class ArbitraryNode<T> {
 
 		private FixtureNodeStatus(
 			@Nullable Arbitrary<T> arbitrary,
-			@Nullable ContainerSizeConstraint containerSizeConstraint,
+			ContainerSizeConstraint containerSizeConstraint,
 			boolean nullable,
 			boolean manipulated,
 			boolean active
@@ -369,7 +378,6 @@ public final class ArbitraryNode<T> {
 			return arbitrary;
 		}
 
-		@Nullable
 		public ContainerSizeConstraint getContainerSizeConstraint() {
 			return containerSizeConstraint;
 		}
