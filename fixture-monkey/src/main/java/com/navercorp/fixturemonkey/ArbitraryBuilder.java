@@ -12,6 +12,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import javax.annotation.Nullable;
+
 import net.jqwik.api.Arbitrary;
 
 import com.navercorp.fixturemonkey.arbitrary.AbstractArbitrarySet;
@@ -192,13 +194,23 @@ public final class ArbitraryBuilder<T> {
 		return this;
 	}
 
-	public <U> ArbitraryBuilder<T> set(String expression, U value) {
+	@SuppressWarnings("unchecked")
+	public ArbitraryBuilder<T> set(String expression, @Nullable Object value) {
+		if (value == null) {
+			return this.setNull(expression);
+		}
+		if (value instanceof Arbitrary) {
+			return this.set(expression, (Arbitrary<T>)value);
+		}
 		ArbitraryExpression arbitraryExpression = ArbitraryExpression.from(expression);
 		this.preArbitraryManipulators.add(new ArbitrarySet<>(arbitraryExpression, value));
 		return this;
 	}
 
-	public <U> ArbitraryBuilder<T> set(String expression, U value, long limit) {
+	public ArbitraryBuilder<T> set(String expression, @Nullable Object value, long limit) {
+		if (value == null) {
+			return this.setNull(expression);
+		}
 		ArbitraryExpression arbitraryExpression = ArbitraryExpression.from(expression);
 		this.preArbitraryManipulators.add(new ArbitrarySet<>(arbitraryExpression, value, limit));
 		return this;
@@ -226,29 +238,32 @@ public final class ArbitraryBuilder<T> {
 		return this;
 	}
 
-	public <U> ArbitraryBuilder<T> set(String expression, Arbitrary<U> value) {
+	public ArbitraryBuilder<T> set(String expression, @Nullable Arbitrary<T> value) {
+		if (value == null) {
+			return this.setNull(expression);
+		}
 		ArbitraryExpression arbitraryExpression = ArbitraryExpression.from(expression);
 		this.preArbitraryManipulators.add(new ArbitrarySetArbitrary<>(arbitraryExpression, value));
 		return this;
 	}
 
-	public <U> ArbitraryBuilder<T> filter(Class<U> clazz, String expression, Predicate<U> filter, long limit) {
+	public <U> ArbitraryBuilder<T> filter(String expression, Class<U> clazz, Predicate<U> filter, long limit) {
 		ArbitraryExpression arbitraryExpression = ArbitraryExpression.from(expression);
 		this.postArbitraryManipulators.add(new ArbitraryFilter<>(clazz, arbitraryExpression, filter, limit));
 		return this;
 	}
 
-	public <U> ArbitraryBuilder<T> filter(Class<U> clazz, String expression, Predicate<U> filter) {
+	public <U> ArbitraryBuilder<T> filter(String expression, Class<U> clazz, Predicate<U> filter) {
 		ArbitraryExpression arbitraryExpression = ArbitraryExpression.from(expression);
 		this.postArbitraryManipulators.add(new ArbitraryFilter<>(clazz, arbitraryExpression, filter));
 		return this;
 	}
 
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	public <U> ArbitraryBuilder<T> addPostArbitraryManipulator(PostArbitraryManipulator<U> postArbitraryManipulator) {
+	public ArbitraryBuilder<T> addPostArbitraryManipulator(PostArbitraryManipulator<T> postArbitraryManipulator) {
 		Collection<ArbitraryNode> foundNodes = tree.findAll(postArbitraryManipulator.getArbitraryExpression());
 		if (!foundNodes.isEmpty()) {
-			for (ArbitraryNode<U> foundNode : foundNodes) {
+			for (ArbitraryNode<T> foundNode : foundNodes) {
 				if (postArbitraryManipulator.isMappableTo(foundNode)) {
 					foundNode.addArbitraryOperation(postArbitraryManipulator);
 				}
@@ -283,7 +298,7 @@ public final class ArbitraryBuilder<T> {
 		return this;
 	}
 
-	public <U> ArbitraryBuilder<T> customize(Class<U> type, ArbitraryCustomizer<U> customizer) {
+	public ArbitraryBuilder<T> customize(Class<T> type, ArbitraryCustomizer<T> customizer) {
 		ArbitraryCustomizers newFixtureCustomizer = this.arbitraryCustomizers.mergeWith(
 			Collections.singletonMap(type, customizer)
 		);
@@ -326,11 +341,11 @@ public final class ArbitraryBuilder<T> {
 	}
 
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	public <U> void apply(AbstractArbitrarySet<U> fixtureSet) {
+	public void apply(AbstractArbitrarySet<T> fixtureSet) {
 		Collection<ArbitraryNode> foundNodes = tree.findAll(fixtureSet.getArbitraryExpression());
 
 		if (!foundNodes.isEmpty()) {
-			for (ArbitraryNode<U> foundNode : foundNodes) {
+			for (ArbitraryNode<T> foundNode : foundNodes) {
 				foundNode.apply(fixtureSet);
 			}
 		}

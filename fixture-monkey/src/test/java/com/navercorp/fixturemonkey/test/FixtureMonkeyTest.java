@@ -623,8 +623,8 @@ class FixtureMonkeyTest {
 	void giveMeFilterLimitIndex() {
 		StringListClass actual = this.sut.giveMeBuilder(StringListClass.class)
 			.size("values", 2, 2)
-			.filter(String.class, "values[*]", it -> it.length() > 0)
-			.filter(String.class, "values[*]", it -> it.length() > 5, 1)
+			.filter("values[*]", String.class, it -> it.length() > 0)
+			.filter("values[*]", String.class, it -> it.length() > 5, 1)
 			.sample();
 
 		then(actual.values).anyMatch(it -> it.length() > 5);
@@ -633,8 +633,8 @@ class FixtureMonkeyTest {
 	@Property
 	void giveMeFilterLimitIndexReturnsNotFilter() {
 		StringListClass actual = this.sut.giveMeBuilder(StringListClass.class)
-			.filter(String.class, "values[*]", it -> it.length() > 5)
-			.filter(String.class, "values[*]", it -> it.length() == 0, 0)
+			.filter("values[*]", String.class, it -> it.length() > 5)
+			.filter("values[*]", String.class, it -> it.length() == 0, 0)
 			.sample();
 
 		then(actual.values).allMatch(it -> it.length() > 5);
@@ -987,6 +987,15 @@ class FixtureMonkeyTest {
 			.sample();
 
 		then(actual.values.size()).isLessThanOrEqualTo(10);
+	}
+
+	@Property
+	void giveMeBuilderSetNull() {
+		StringWrapperClass actual = this.sut.giveMeBuilder(StringWrapperClass.class)
+			.set("value", null)
+			.sample();
+
+		then(actual.value).isNull();
 	}
 
 	@Data
