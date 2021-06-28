@@ -28,6 +28,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import com.navercorp.fixturemonkey.ArbitraryBuilder;
+import com.navercorp.fixturemonkey.ArbitraryBuilders;
 import com.navercorp.fixturemonkey.ArbitraryOption;
 import com.navercorp.fixturemonkey.FixtureMonkey;
 import com.navercorp.fixturemonkey.customizer.ArbitraryCustomizer;
@@ -917,6 +918,57 @@ class FixtureMonkeyTest {
 			.sample();
 
 		then(actual.values.size()).isEqualTo(3);
+	}
+
+	@Property
+	void giveMeZipWith() {
+		ArbitraryBuilder<String> stringArbitraryBuilder = this.sut.giveMeBuilder(String.class);
+		String actual = this.sut.giveMeBuilder(Integer.class)
+			.zipWith(stringArbitraryBuilder, (integer, string) -> integer + "" + string)
+			.sample();
+
+		then(actual).isNotNull();
+	}
+
+	@Property
+	void giveMeZipTwoElement() {
+		ArbitraryBuilder<String> stringArbitraryBuilder = this.sut.giveMeBuilder(String.class);
+		ArbitraryBuilder<Integer> integerArbitraryBuilder = this.sut.giveMeBuilder(Integer.class);
+		String actual = ArbitraryBuilders.zip(
+			stringArbitraryBuilder,
+			integerArbitraryBuilder,
+			(integer, string) -> integer + "" + string
+		).sample();
+
+		then(actual).isNotNull();
+	}
+
+	@Property
+	void setAfterBuildNotAffected() {
+		ArbitraryBuilder<StringWrapperClass> builder = this.sut.giveMeBuilder(StringWrapperClass.class);
+		Arbitrary<StringWrapperClass> build = builder.build();
+		ArbitraryBuilder<StringWrapperClass> actual = builder.set("value", "set");
+
+		StringWrapperClass actualSample = actual.sample();
+		StringWrapperClass buildSample = build.sample();
+		then(actualSample).isNotEqualTo(buildSample);
+		then(actualSample.value).isEqualTo("set");
+	}
+
+	@Property
+	void giveMeZipReturnsNew() {
+		ArbitraryBuilder<String> stringArbitraryBuilder = this.sut.giveMeBuilder(String.class);
+		ArbitraryBuilder<Integer> integerArbitraryBuilder = this.sut.giveMeBuilder(Integer.class);
+
+		Arbitrary<String> zippedArbitraryBuilder = ArbitraryBuilders.zip(
+			stringArbitraryBuilder,
+			integerArbitraryBuilder,
+			(integer, string) -> integer + "" + string
+		).build();
+
+		String result1 = zippedArbitraryBuilder.sample();
+		String result2 = zippedArbitraryBuilder.sample();
+		then(result1).isNotEqualTo(result2);
 	}
 
 	@Data

@@ -146,6 +146,10 @@ public final class ArbitraryType<T> {
 		return annotatedType;
 	}
 
+	public boolean isNoneType() {
+		return type == Object.class;
+	}
+
 	private Optional<AnnotatedType> findGenericAnnotatedType(int index) {
 		if (annotatedType == null) {
 			return Optional.empty();

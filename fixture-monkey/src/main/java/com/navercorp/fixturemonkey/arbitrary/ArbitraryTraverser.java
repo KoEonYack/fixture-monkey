@@ -39,22 +39,24 @@ public final class ArbitraryTraverser {
 		FieldNameResolver fieldNameResolver
 	) {
 		node.getChildren().clear();
+		T value = node.getValueSupplier().get();
 		ArbitraryType<T> currentNodeType = node.getType();
 		Class<?> clazz = currentNodeType.getType();
+
 		List<Field> fields = ReflectionUtils.findFields(clazz, this::availableField,
 			ReflectionUtils.HierarchyTraversalMode.TOP_DOWN);
-
-		T value = node.getValue();
 
 		if (isTraversable(currentNodeType)) {
 			for (Field field : fields) {
 				ArbitraryType arbitraryType = getFixtureType(field);
 				double nullInject = arbitraryOption.getNullInject();
 				boolean nullable = isNullableField(field);
-				Object nextValue = null;
+				Object nextValue;
 				if (value != null) {
 					nextValue = extractValue(value, field);
 					nullable = false;
+				} else {
+					nextValue = null;
 				}
 
 				ArbitraryNode<?> nextFrame = ArbitraryNode.builder()
@@ -63,7 +65,7 @@ public final class ArbitraryTraverser {
 					.nullable(nullable)
 					.nullInject(nullInject)
 					.keyOfMapStructure(keyOfMapStructure)
-					.value(nextValue)
+					.valueSupplier(() -> nextValue)
 					.build();
 
 				node.addChildNode(nextFrame);
@@ -164,7 +166,7 @@ public final class ArbitraryTraverser {
 
 		ArbitraryType<U> childType = clazz.getGenericFixtureType(0);
 
-		T value = currentNode.getValue();
+		T value = currentNode.getValueSupplier().get();
 
 		if (value != null) {
 			Iterator<U> iterator;
@@ -179,7 +181,9 @@ public final class ArbitraryTraverser {
 					U nextObject = iterator.next();
 					ArbitraryNode<U> nextNode = ArbitraryNode.<U>builder()
 						.type(childType)
-						.value(nextObject)
+						.valueSupplier(
+							() -> nextObject
+						)
 						.fieldName(fieldName)
 						.indexOfIterable(index)
 						.build();
@@ -216,7 +220,7 @@ public final class ArbitraryTraverser {
 
 		ArbitraryType<U> childType = clazz.getArrayFixtureType();
 
-		T value = currentNode.getValue();
+		T value = currentNode.getValueSupplier().get();
 		if (value != null) {
 			int length = Array.getLength(value);
 			for (int i = 0; i < length; i++) {
@@ -225,7 +229,7 @@ public final class ArbitraryTraverser {
 					.type(childType)
 					.fieldName(fieldName)
 					.indexOfIterable(i)
-					.value(nextValue)
+					.valueSupplier(() -> nextValue)
 					.build();
 				currentNode.addChildNode(nextNode);
 				traverse(nextNode, false, fieldNameResolver);

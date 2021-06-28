@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotEmpty;
@@ -25,7 +26,7 @@ public final class ArbitraryNode<T> {
 	private final String fieldName;
 	private final String metadata;
 	private final int indexOfIterable;
-	private final T value;
+	private final Supplier<T> valueSupplier;
 	private final FixtureNodeStatus<T> status;
 	private final boolean keyOfMapStructure;
 	private final double nullInject;
@@ -37,7 +38,7 @@ public final class ArbitraryNode<T> {
 		String fieldName,
 		String metadata,
 		int indexOfIterable,
-		T value,
+		Supplier<T> valueSupplier,
 		FixtureNodeStatus<T> status,
 		boolean keyOfMapStructure,
 		double nullInject
@@ -49,7 +50,7 @@ public final class ArbitraryNode<T> {
 		this.metadata = metadata;
 		this.indexOfIterable = indexOfIterable;
 		this.status = status.copy();
-		this.value = value;
+		this.valueSupplier = valueSupplier;
 		this.keyOfMapStructure = keyOfMapStructure;
 		this.nullInject = nullInject;
 	}
@@ -196,7 +197,11 @@ public final class ArbitraryNode<T> {
 		return children;
 	}
 
+	@SuppressWarnings("unchecked")
 	public ArbitraryType<T> getType() {
+		if (type.isNoneType()) {
+			return new ArbitraryType<>((Class<T>)this.getValueSupplier().get().getClass());
+		}
 		return type;
 	}
 
@@ -236,8 +241,8 @@ public final class ArbitraryNode<T> {
 		return getStatus().isFixed();
 	}
 
-	public T getValue() {
-		return value;
+	public Supplier<T> getValueSupplier() {
+		return valueSupplier;
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -254,6 +259,7 @@ public final class ArbitraryNode<T> {
 			.fieldName(this.getFieldName())
 			.metadata(this.getMetadata())
 			.indexOfIterable(this.getIndexOfIterable())
+			.valueSupplier(this.valueSupplier)
 			.status(this.getStatus().copy())
 			.keyOfMapStructure(this.isKeyOfMapStructure())
 			.nullInject(this.getNullInject())
@@ -445,7 +451,7 @@ public final class ArbitraryNode<T> {
 		private String metadata = "";
 		private int indexOfIterable = NO_OR_ALL_INDEX_INTEGER_VALUE;
 		@Nullable
-		private T value = null;
+		private Supplier<T> valueSupplier = () -> null;
 		private FixtureNodeStatus<T> status = new FixtureNodeStatus<>();
 		private boolean keyOfMapStructure = false;
 		private double nullInject = 0.3f;
@@ -507,8 +513,8 @@ public final class ArbitraryNode<T> {
 			return this;
 		}
 
-		public FixtureNodeBuilder<T> value(T value) {
-			this.value = value;
+		public FixtureNodeBuilder<T> valueSupplier(Supplier<T> valueSupplier) {
+			this.valueSupplier = valueSupplier;
 			return this;
 		}
 
@@ -519,7 +525,7 @@ public final class ArbitraryNode<T> {
 				fieldName,
 				metadata,
 				indexOfIterable,
-				value,
+				valueSupplier,
 				status,
 				keyOfMapStructure,
 				nullInject
