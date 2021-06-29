@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
 
+import com.navercorp.fixturemonkey.TypeSupports;
 import com.navercorp.fixturemonkey.generator.ArbitraryGenerator;
 
 public final class ArbitraryNode<T> {
@@ -141,10 +142,15 @@ public final class ArbitraryNode<T> {
 		if (preArbitraryManipulator instanceof AbstractArbitrarySet) {
 			Object toValue = ((AbstractArbitrarySet<T>)preArbitraryManipulator).getValue();
 			Class<?> clazz = this.getType().getType();
-			if (toValue.getClass() != clazz) {
-				log.warn("node type is \"{}\", given set value is \"{}\".",
-					toValue.getClass().getSimpleName(),
-					clazz.getSimpleName()
+			Class<?> toValueClazz = toValue.getClass();
+			if (
+				!TypeSupports.isSameType(clazz, toValueClazz)
+					&& !Arbitrary.class.isAssignableFrom(toValueClazz)
+			) {
+				log.warn("field \"{}\" type is \"{}\", but given set value is \"{}\".",
+					fieldName,
+					clazz.getSimpleName(),
+					toValueClazz.getSimpleName()
 				);
 			}
 			Arbitrary<T> appliedArbitrary = preArbitraryManipulator.apply(status.arbitrary);
