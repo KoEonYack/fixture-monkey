@@ -1,5 +1,6 @@
 package com.navercorp.fixturemonkey;
 
+import static com.navercorp.fixturemonkey.Constants.DEFAULT_ELEMENT_MAX_SIZE;
 import static java.util.stream.Collectors.toList;
 
 import java.util.ArrayList;
@@ -26,8 +27,7 @@ import com.navercorp.fixturemonkey.arbitrary.ArbitrarySetNullity;
 import com.navercorp.fixturemonkey.arbitrary.ArbitraryTraverser;
 import com.navercorp.fixturemonkey.arbitrary.ArbitraryTree;
 import com.navercorp.fixturemonkey.arbitrary.ArbitraryType;
-import com.navercorp.fixturemonkey.arbitrary.ContainerMaxSizeManipulator;
-import com.navercorp.fixturemonkey.arbitrary.ContainerMinSizeManipulator;
+import com.navercorp.fixturemonkey.arbitrary.ContainerSizeManipulator;
 import com.navercorp.fixturemonkey.arbitrary.MetadataManipulator;
 import com.navercorp.fixturemonkey.arbitrary.PostArbitraryManipulator;
 import com.navercorp.fixturemonkey.arbitrary.PreArbitraryManipulator;
@@ -274,27 +274,27 @@ public final class ArbitraryBuilder<T> {
 
 	public ArbitraryBuilder<T> size(String expression, int size) {
 		ArbitraryExpression arbitraryExpression = ArbitraryExpression.from(expression);
-		metadataManipulators.add(new ContainerMinSizeManipulator(arbitraryExpression, size));
-		metadataManipulators.add(new ContainerMaxSizeManipulator(arbitraryExpression, size));
+		metadataManipulators.add(new ContainerSizeManipulator(arbitraryExpression, size, size));
 		return this;
 	}
 
 	public ArbitraryBuilder<T> size(String expression, int min, int max) {
 		ArbitraryExpression arbitraryExpression = ArbitraryExpression.from(expression);
-		metadataManipulators.add(new ContainerMinSizeManipulator(arbitraryExpression, min));
-		metadataManipulators.add(new ContainerMaxSizeManipulator(arbitraryExpression, max));
+		metadataManipulators.add(new ContainerSizeManipulator(arbitraryExpression, min, max));
 		return this;
 	}
 
 	public ArbitraryBuilder<T> minSize(String expression, int min) {
 		ArbitraryExpression arbitraryExpression = ArbitraryExpression.from(expression);
-		metadataManipulators.add(new ContainerMinSizeManipulator(arbitraryExpression, min));
+		metadataManipulators.add(
+			new ContainerSizeManipulator(arbitraryExpression, min, null)
+		);
 		return this;
 	}
 
 	public ArbitraryBuilder<T> maxSize(String expression, int max) {
 		ArbitraryExpression arbitraryExpression = ArbitraryExpression.from(expression);
-		metadataManipulators.add(new ContainerMaxSizeManipulator(arbitraryExpression, max));
+		metadataManipulators.add(new ContainerSizeManipulator(arbitraryExpression, null, max));
 		return this;
 	}
 
@@ -309,31 +309,17 @@ public final class ArbitraryBuilder<T> {
 	}
 
 	@SuppressWarnings({"rawtypes", "unchecked"})
-	public ArbitraryBuilder<T> apply(ContainerMinSizeManipulator manipulator) {
+	public ArbitraryBuilder<T> apply(ContainerSizeManipulator manipulator) {
 		ArbitraryExpression arbitraryExpression = manipulator.getArbitraryExpression();
-		int size = manipulator.getSize();
+		Integer min = manipulator.getMin();
+		Integer max = manipulator.getMax();
 
 		Collection<ArbitraryNode> foundNodes = tree.findAll(arbitraryExpression);
 		for (ArbitraryNode foundNode : foundNodes) {
 			if (!foundNode.getType().isContainer()) {
 				throw new IllegalArgumentException("Only Container can set size");
 			}
-			foundNode.setContainerMinSize(size);
-			traverser.traverse(foundNode, false, generator); // regenerate subtree
-		}
-		return this;
-	}
-
-	@SuppressWarnings({"rawtypes", "unchecked"})
-	public ArbitraryBuilder<T> apply(ContainerMaxSizeManipulator manipulator) {
-		ArbitraryExpression arbitraryExpression = manipulator.getArbitraryExpression();
-		int max = manipulator.getSize();
-
-		Collection<ArbitraryNode> foundNodes = tree.findAll(arbitraryExpression);
-		for (ArbitraryNode foundNode : foundNodes) {
-			if (!foundNode.getType().isContainer()) {
-				throw new IllegalArgumentException("Only Container can set size");
-			}
+			foundNode.setContainerMinSize(min);
 			foundNode.setContainerMaxSize(max);
 			traverser.traverse(foundNode, false, generator); // regenerate subtree
 		}

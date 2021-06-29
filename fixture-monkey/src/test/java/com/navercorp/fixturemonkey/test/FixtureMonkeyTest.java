@@ -972,6 +972,15 @@ class FixtureMonkeyTest {
 	}
 
 	@Property
+	void giveMeBuilderSetNull() {
+		StringWrapperClass actual = this.sut.giveMeBuilder(StringWrapperClass.class)
+			.set("value", null)
+			.sample();
+
+		then(actual.value).isNull();
+	}
+
+	@Property
 	void giveMeMinSize() {
 		IntegerListClass actual = this.sut.giveMeBuilder(IntegerListClass.class)
 			.minSize("values", 2)
@@ -990,12 +999,50 @@ class FixtureMonkeyTest {
 	}
 
 	@Property
-	void giveMeBuilderSetNull() {
-		StringWrapperClass actual = this.sut.giveMeBuilder(StringWrapperClass.class)
-			.set("value", null)
+	void giveMeSizeMinMaxBiggerThanDefault() {
+		IntegerListClass actual = this.sut.giveMeBuilder(IntegerListClass.class)
+			.size("values", 100, 150)
 			.sample();
 
-		then(actual.value).isNull();
+		then(actual.values.size()).isBetween(100, 150);
+	}
+
+	@Property
+	void giveMeSizeMinBiggerThanDefaultMax() {
+		IntegerListClass actual = this.sut.giveMeBuilder(IntegerListClass.class)
+			.minSize("values", 100)
+			.sample();
+
+		then(actual.values.size()).isBetween(100, 110);
+	}
+
+	@Property
+	void giveMeSizeMaxSizeIsZero() {
+		IntegerListClass actual = this.sut.giveMeBuilder(IntegerListClass.class)
+			.maxSize("values", 0)
+			.sample();
+
+		then(actual.values).isEmpty();
+	}
+
+	@Property
+	void giveMeSizeMaxSizeBeforeMinSizeIsZero() {
+		IntegerListClass actual = this.sut.giveMeBuilder(IntegerListClass.class)
+			.maxSize("values", 15)
+			.minSize("values", 14)
+			.sample();
+
+		then(actual.values.size()).isBetween(14, 15);
+	}
+
+	@Property
+	void giveMeSizeMinSizeBeforeMaxSizeIsZero() {
+		IntegerListClass actual = this.sut.giveMeBuilder(IntegerListClass.class)
+			.minSize("values", 14)
+			.maxSize("values", 15)
+			.sample();
+
+		then(actual.values.size()).isBetween(14, 15);
 	}
 
 	@Data

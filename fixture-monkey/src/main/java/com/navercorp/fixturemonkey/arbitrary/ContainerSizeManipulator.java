@@ -2,19 +2,33 @@ package com.navercorp.fixturemonkey.arbitrary;
 
 import java.util.Objects;
 
+import javax.annotation.Nullable;
+
 import com.navercorp.fixturemonkey.ArbitraryBuilder;
 
-public final class ContainerMinSizeManipulator implements MetadataManipulator {
+public final class ContainerSizeManipulator implements MetadataManipulator {
 	private ArbitraryExpression arbitraryExpression;
-	private final int size;
+	private final Integer min;
+	private final Integer max;
 
-	public ContainerMinSizeManipulator(ArbitraryExpression arbitraryExpression, int size) {
+	public ContainerSizeManipulator(
+		ArbitraryExpression arbitraryExpression,
+		@Nullable Integer min,
+		@Nullable Integer max
+	) {
 		this.arbitraryExpression = arbitraryExpression;
-		this.size = size;
+		this.min = min;
+		this.max = max;
 	}
 
-	public int getSize() {
-		return size;
+	@Nullable
+	public Integer getMin() {
+		return min;
+	}
+
+	@Nullable
+	public Integer getMax() {
+		return max;
 	}
 
 	@Override
@@ -38,8 +52,8 @@ public final class ContainerMinSizeManipulator implements MetadataManipulator {
 	}
 
 	@Override
-	public ContainerMinSizeManipulator copy() {
-		return new ContainerMinSizeManipulator(this.arbitraryExpression, this.size);
+	public ContainerSizeManipulator copy() {
+		return new ContainerSizeManipulator(this.arbitraryExpression, this.min, this.max);
 	}
 
 	@Override
@@ -50,13 +64,14 @@ public final class ContainerMinSizeManipulator implements MetadataManipulator {
 		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
-		ContainerMinSizeManipulator that = (ContainerMinSizeManipulator)obj;
-		return size == that.size
-			&& Objects.equals(arbitraryExpression, that.arbitraryExpression);
+		ContainerSizeManipulator that = (ContainerSizeManipulator)obj;
+		return arbitraryExpression.equals(that.arbitraryExpression)
+			&& Objects.equals(min, that.min)
+			&& Objects.equals(max, that.max);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(arbitraryExpression, size);
+		return Objects.hash(arbitraryExpression, min, max);
 	}
 }
