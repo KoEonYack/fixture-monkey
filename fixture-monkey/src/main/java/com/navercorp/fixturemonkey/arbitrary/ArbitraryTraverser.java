@@ -11,6 +11,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import javax.validation.constraints.NotEmpty;
 
@@ -170,9 +171,11 @@ public final class ArbitraryTraverser {
 
 		if (value != null) {
 			Iterator<U> iterator;
-			if (value instanceof Collection || value instanceof Iterator) {
+			if (value instanceof Collection || value instanceof Iterator || value instanceof Stream) {
 				if (value instanceof Collection) {
 					iterator = ((Collection<U>)value).iterator();
+				} else if (value instanceof Stream) {
+					iterator = ((Stream<U>)value).iterator();
 				} else {
 					iterator = (Iterator<U>)value;
 				}
@@ -192,6 +195,26 @@ public final class ArbitraryTraverser {
 					index++;
 				}
 				return;
+			} else {
+				if (clazz.isOptional()) {
+					Optional<U> optional = ((Optional<U>)value);
+					if (!optional.isPresent()) {
+						return;
+					}
+					U nextObject = optional.get();
+					ArbitraryNode<U> nextNode = ArbitraryNode.<U>builder()
+						.type(childType)
+						.valueSupplier(
+							() -> nextObject
+						)
+						.fieldName(fieldName)
+						.indexOfIterable(0)
+						.build();
+					currentNode.addChildNode(nextNode);
+					traverse(nextNode, false, fieldNameResolver);
+					return;
+				}
+
 			}
 		}
 

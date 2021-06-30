@@ -20,7 +20,9 @@ import javax.validation.constraints.Positive;
 
 import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
+import net.jqwik.api.ForAll;
 import net.jqwik.api.Property;
+import net.jqwik.api.Provide;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -103,17 +105,19 @@ class FixtureMonkeyTest {
 		then(actual.value).isEqualTo(1);
 	}
 
-	@Property
-	void giveMeWithCustomizer() {
-		CustomizerIntegerClass actual = this.sut.giveMeBuilder(CustomizerIntegerClass.class)
-			.sample();
-
-		then(actual.value).isEqualTo(1);
+	@Provide
+	Arbitrary<CustomizerIntegerClass> withCustomizer() {
+		return this.sut.giveMeBuilder(CustomizerIntegerClass.class).build();
 	}
 
 	@Property
-	void giveMeCustomize() {
-		IntegerWrapperClass actual = this.sut.giveMeBuilder(IntegerWrapperClass.class)
+	void giveMeWithCustomizer(@ForAll("withCustomizer") CustomizerIntegerClass actual) {
+		then(actual.value).isEqualTo(1);
+	}
+
+	@Provide
+	Arbitrary<IntegerWrapperClass> customize() {
+		return this.sut.giveMeBuilder(IntegerWrapperClass.class)
 			.customize(IntegerWrapperClass.class, new ArbitraryCustomizer<IntegerWrapperClass>() {
 				@Override
 				public void customizeFields(Class<IntegerWrapperClass> type, FieldArbitraries fieldArbitraries) {
@@ -125,9 +129,11 @@ class FixtureMonkeyTest {
 				public IntegerWrapperClass customizeFixture(@Nullable IntegerWrapperClass object) {
 					return object;
 				}
-			})
-			.sample();
+			}).build();
+	}
 
+	@Property
+	void giveMeCustomize(@ForAll("customize") IntegerWrapperClass actual) {
 		then(actual.value).isEqualTo(1);
 	}
 
@@ -138,24 +144,34 @@ class FixtureMonkeyTest {
 		then(actual.value).isBetween(Integer.MIN_VALUE, Integer.MAX_VALUE);
 	}
 
-	@Property
-	void giveMeWhenDefaultGeneratorIsBuilderArbitraryGenerator() {
+	@Provide
+	Arbitrary<BuilderIntegerClass> whenDefaultGeneratorIsBuilderArbitraryGenerator() {
 		FixtureMonkey sut = FixtureMonkey.builder()
 			.defaultGenerator(BuilderArbitraryGenerator.INSTANCE)
 			.build();
 
-		BuilderIntegerClass actual = sut.giveMeOne(BuilderIntegerClass.class);
-
-		then(actual.value).isBetween(Integer.MIN_VALUE, Integer.MAX_VALUE);
+		return sut.giveMeBuilder(BuilderIntegerClass.class).build();
 	}
 
 	@Property
-	void giveMeWhenDefaultGeneratorIsFieldReflectionArbitraryGenerator() {
+	void giveMeWhenDefaultGeneratorIsBuilderArbitraryGenerator(
+		@ForAll("whenDefaultGeneratorIsBuilderArbitraryGenerator") BuilderIntegerClass actual
+	) {
+		then(actual.value).isBetween(Integer.MIN_VALUE, Integer.MAX_VALUE);
+	}
+
+	@Provide
+	Arbitrary<FieldReflectionIntegerClass> whenDefaultGeneratorIsFieldReflectionArbitraryGenerator() {
 		FixtureMonkey sut = FixtureMonkey.builder()
 			.defaultGenerator(FieldReflectionArbitraryGenerator.INSTANCE)
 			.build();
-		FieldReflectionIntegerClass actual = sut.giveMeOne(FieldReflectionIntegerClass.class);
+		return sut.giveMeBuilder(FieldReflectionIntegerClass.class).build();
+	}
 
+	@Property
+	void giveMeWhenDefaultGeneratorIsFieldReflectionArbitraryGenerator(
+		@ForAll("whenDefaultGeneratorIsFieldReflectionArbitraryGenerator") FieldReflectionIntegerClass actual
+	) {
 		then(actual.value).isBetween(Integer.MIN_VALUE, Integer.MAX_VALUE);
 	}
 
@@ -202,13 +218,13 @@ class FixtureMonkeyTest {
 		then(actual.value).isBetween(Integer.MIN_VALUE, Integer.MAX_VALUE);
 	}
 
-	@Property
-	void giveMeWhenDefaultGeneratorIsBuilderArbitraryGeneratorWithCustomizer() {
+	@Provide
+	Arbitrary<BuilderIntegerClass> whenDefaultGeneratorIsBuilderArbitraryGeneratorWithCustomizer() {
 		FixtureMonkey sut = FixtureMonkey.builder()
 			.defaultGenerator(BuilderArbitraryGenerator.INSTANCE)
 			.build();
-		BuilderIntegerClass actual = sut.giveMeOne(BuilderIntegerClass.class,
-			new ArbitraryCustomizer<BuilderIntegerClass>() {
+		return sut.giveMeBuilder(BuilderIntegerClass.class)
+			.customize(BuilderIntegerClass.class, new ArbitraryCustomizer<BuilderIntegerClass>() {
 				@Override
 				public void customizeFields(Class<BuilderIntegerClass> type, FieldArbitraries fieldArbitraries) {
 					fieldArbitraries.putArbitrary("value", Arbitraries.just(1));
@@ -219,282 +235,359 @@ class FixtureMonkeyTest {
 				public BuilderIntegerClass customizeFixture(@Nullable BuilderIntegerClass fixture) {
 					return fixture;
 				}
-			});
+			})
+			.build();
+	}
 
+	@Property
+	void giveMeWhenDefaultGeneratorIsBuilderArbitraryGeneratorWithCustomizer(
+		@ForAll("whenDefaultGeneratorIsBuilderArbitraryGeneratorWithCustomizer") BuilderIntegerClass actual
+	) {
 		then(actual.value).isEqualTo(1);
 	}
 
-	@Property
-	void giveMeSpecSet() {
-		int expected = -1;
-
-		IntegerWrapperClass actual = this.sut.giveMeBuilder(IntegerWrapperClass.class)
-			.spec(new ExpressionSpec().set("value", expected))
-			.build()
-			.sample();
-
-		then(actual.getValue()).isEqualTo(expected);
+	@Provide
+	Arbitrary<IntegerWrapperClass> specSet() {
+		return this.sut.giveMeBuilder(IntegerWrapperClass.class)
+			.spec(new ExpressionSpec().set("value", -1))
+			.build();
 	}
 
 	@Property
-	void giveMeSpecSetArbitrary() {
-		IntegerWrapperClass actual = this.sut.giveMeBuilder(IntegerWrapperClass.class)
+	void giveMeSpecSet(@ForAll("specSet") IntegerWrapperClass actual) {
+		then(actual.getValue()).isEqualTo(-1);
+	}
+
+	@Provide
+	Arbitrary<IntegerWrapperClass> specSetArbitrary() {
+		return this.sut.giveMeBuilder(IntegerWrapperClass.class)
 			.spec(new ExpressionSpec().set("value", Arbitraries.just(1)))
-			.sample();
+			.build();
+	}
 
+	@Property
+	void giveMeSpecSetArbitrary(@ForAll("specSetArbitrary") IntegerWrapperClass actual) {
 		then(actual.value).isEqualTo(1);
 	}
 
-	@Property
-	void giveMeSetArbitrary() {
-		Arbitrary<IntegerWrapperClass> builder = this.sut.giveMeBuilder(IntegerWrapperClass.class)
-			.set("value", Arbitraries.just(1)).build();
-
-		then(builder.sample().value).isEqualTo(1);
+	@Provide
+	Arbitrary<IntegerListClass> listSize() {
+		return this.sut.giveMeBuilder(IntegerListClass.class)
+			.spec(new ExpressionSpec().size("values", 1, 1))
+			.build();
 	}
 
 	@Property
-	void giveMeListSize() {
-		IntegerListClass actual = this.sut.giveMeBuilder(IntegerListClass.class)
-			.spec(new ExpressionSpec().size("values", 1, 1))
-			.build()
-			.sample();
-
+	void giveMeListSize(@ForAll("listSize") IntegerListClass actual) {
 		then(actual.values).hasSize(1);
 	}
 
-	@Property
-	void giveMeSetNull() {
-		IntegerListClass actual = this.sut.giveMeBuilder(IntegerListClass.class)
+	@Provide
+	Arbitrary<IntegerListClass> setNull() {
+		return this.sut.giveMeBuilder(IntegerListClass.class)
 			.spec(new ExpressionSpec().setNull("values"))
-			.sample();
-
-		then(actual.values).isNull();
+			.build();
 	}
 
 	@Property
-	void giveMeSizeAfterSetNullReturnsNull() {
-		IntegerListClass actual = this.sut.giveMeBuilder(IntegerListClass.class)
+	void giveMeSetNull(@ForAll("setNull") IntegerListClass actual) {
+		then(actual.values).isNull();
+	}
+
+	@Provide
+	Arbitrary<IntegerListClass> sizeAfterSetNull() {
+		return this.sut.giveMeBuilder(IntegerListClass.class)
 			.spec(new ExpressionSpec()
 				.setNull("values")
 				.size("values", 1, 1)
 			)
-			.sample();
-
-		then(actual.values).isNull();
+			.build();
 	}
 
 	@Property
-	void giveMeSetAfterSetNullReturnsNotNull() {
-		IntegerListClass actual = this.sut.giveMeBuilder(IntegerListClass.class)
+	void giveMeSizeAfterSetNullReturnsNull(@ForAll("sizeAfterSetNull") IntegerListClass actual) {
+		then(actual.values).isNull();
+	}
+
+	@Provide
+	Arbitrary<IntegerListClass> setAfterSetNullReturnsNotNull() {
+		return this.sut.giveMeBuilder(IntegerListClass.class)
 			.spec(new ExpressionSpec()
 				.setNull("values")
 				.size("values", 1, 1)
 				.set("values[0]", 0)
 			)
-			.sample();
+			.build();
+	}
 
+	@Property
+	void giveMeSetAfterSetNullReturnsNotNull(@ForAll("setAfterSetNullReturnsNotNull") IntegerListClass actual) {
 		then(actual.values).isNotNull();
 		then(actual.values).hasSize(1);
 		then(actual.values.get(0)).isEqualTo(0);
 	}
 
-	@Property
-	void giveMeSetNotNullAfterSetNullReturnsNotNull() {
-		IntegerListClass actual = this.sut.giveMeBuilder(IntegerListClass.class)
+	@Provide
+	Arbitrary<IntegerListClass> setNotNullAfterSetNullReturnsNotNull() {
+		return this.sut.giveMeBuilder(IntegerListClass.class)
 			.spec(new ExpressionSpec()
 				.setNull("values")
 				.setNotNull("values")
 			)
-			.sample();
+			.build();
+	}
 
+	@Property
+	void giveMeSetNotNullAfterSetNullReturnsNotNull(
+		@ForAll("setNotNullAfterSetNullReturnsNotNull") IntegerListClass actual
+	) {
 		then(actual.values).isNotNull();
 	}
 
-	@Property
-	void giveMeSetNullAfterSetNotNullReturnsNull() {
-		IntegerListClass actual = this.sut.giveMeBuilder(IntegerListClass.class)
+	@Provide
+	Arbitrary<IntegerListClass> setNullAfterSetNotNullReturnsNull() {
+		return this.sut.giveMeBuilder(IntegerListClass.class)
 			.spec(new ExpressionSpec()
 				.setNotNull("values")
 				.setNull("values")
 			)
-			.sample();
-
-		then(actual.values).isNull();
+			.build();
 	}
 
 	@Property
-	void giveMeSetNullAfterSetReturnsNull() {
-		IntegerListClass actual = this.sut.giveMeBuilder(IntegerListClass.class)
+	void giveMeSetNullAfterSetNotNullReturnsNull(@ForAll("setNullAfterSetNotNullReturnsNull") IntegerListClass actual) {
+		then(actual.values).isNull();
+	}
+
+	@Provide
+	Arbitrary<IntegerListClass> setNullAfterSetReturnsNull() {
+		return this.sut.giveMeBuilder(IntegerListClass.class)
 			.spec(new ExpressionSpec()
 				.size("values", 1, 1)
 				.set("values[0]", 0)
 				.setNull("values")
 			)
-			.sample();
+			.build();
+	}
 
+	@Property
+	void giveMeSetNullAfterSetReturnsNull(@ForAll("setNullAfterSetReturnsNull") IntegerListClass actual) {
 		then(actual.values).isNull();
 	}
 
-	@Property
-	void giveMeSpecSetPrefix() {
-		StringWrapperClass actual = this.sut.giveMeBuilder(StringWrapperClass.class)
+	@Provide
+	Arbitrary<StringWrapperClass> specSetPrefix() {
+		return this.sut.giveMeBuilder(StringWrapperClass.class)
 			.spec(new ExpressionSpec().setPrefix("value", "prefix"))
-			.sample();
+			.build();
+	}
 
+	@Property
+	void giveMeSpecSetPrefix(@ForAll("specSetPrefix") StringWrapperClass actual) {
 		then(actual.value).startsWith("prefix");
 	}
 
-	@Property
-	void giveMeSpecSetSuffix() {
-		StringWrapperClass actual = this.sut.giveMeBuilder(StringWrapperClass.class)
+	@Provide
+	Arbitrary<StringWrapperClass> specSetSuffix() {
+		return this.sut.giveMeBuilder(StringWrapperClass.class)
 			.spec(new ExpressionSpec().setSuffix("value", "suffix"))
-			.sample();
-
-		then(actual.value).endsWith("suffix");
+			.build();
 	}
 
 	@Property
-	void giveMeSpecFilter() {
-		IntegerWrapperClass actual = this.sut.giveMeBuilder(IntegerWrapperClass.class)
+	void giveMeSpecSetSuffix(@ForAll("specSetSuffix") StringWrapperClass actual) {
+		then(actual.value).endsWith("suffix");
+	}
+
+	@Provide
+	Arbitrary<IntegerWrapperClass> specFilter() {
+		return this.sut.giveMeBuilder(IntegerWrapperClass.class)
 			.spec(new ExpressionSpec().<Integer>filter(
 				"value",
 				value -> value >= 0 && value <= 100
 			))
-			.sample();
-
-		then(actual.value).isBetween(0, 100);
+			.build();
 	}
 
 	@Property
-	void giveMeSpecFilterType() {
-		IntegerWrapperClass actual = this.sut.giveMeBuilder(IntegerWrapperClass.class)
+	void giveMeSpecFilter(@ForAll("specFilter") IntegerWrapperClass actual) {
+		then(actual.value).isBetween(0, 100);
+	}
+
+	@Provide
+	Arbitrary<IntegerWrapperClass> specFilterType() {
+		return this.sut.giveMeBuilder(IntegerWrapperClass.class)
 			.spec(new ExpressionSpec().filterInteger(
 				"value",
 				value -> value >= 0 && value <= 100
 			))
-			.sample();
-
-		then(actual.value).isBetween(0, 100);
+			.build();
 	}
 
 	@Property
-	void giveMeFilterIndex() {
-		IntegerListClass actual = this.sut.giveMeBuilder(IntegerListClass.class)
+	void giveMeSpecFilterType(@ForAll("specFilterType") IntegerWrapperClass actual) {
+		then(actual.value).isBetween(0, 100);
+	}
+
+	@Provide
+	Arbitrary<IntegerListClass> filterIndex() {
+		return this.sut.giveMeBuilder(IntegerListClass.class)
 			.spec(new ExpressionSpec()
 				.filterInteger("values[0]", value -> value >= 0 && value <= 100)
 				.size("values", 1, 1))
-			.sample();
+			.build();
+	}
 
+	@Property
+	void giveMeFilterIndex(@ForAll("filterIndex") IntegerListClass actual) {
 		then(actual.values).hasSize(1);
 		then(actual.values.get(0)).isBetween(0, 100);
 	}
 
-	@Property
-	void giveMeObjectToBuilder() {
-		IntegerWrapperClass expected = this.sut.giveMeOne(IntegerWrapperClass.class);
+	// @Provide
+	// Arbitrary<IntegerWrapperClass> objectToBuilder() {
+	// 	IntegerWrapperClass expected = this.sut.giveMeOne(IntegerWrapperClass.class);
+	//
+	// 	return this.sut.giveMeBuilder(expected).build();
+	// }
+	//
+	// @Property
+	// void giveMeObjectToBuilder(@ForAll("objectToBuilder") IntegerWrapperClass actual) {
+	// }
 
-		ArbitraryBuilder<IntegerWrapperClass> actual = this.sut.giveMeBuilder(expected);
-
-		then(actual.sample()).isEqualTo(expected);
-	}
-
-	@Property
-	void giveMeObjectToBuilderSet() {
+	@Provide
+	Arbitrary<IntegerWrapperClass> objectToBuilderSet() {
 		IntegerWrapperClass expected = this.sut.giveMeOne(IntegerWrapperClass.class);
 
 		ArbitraryBuilder<IntegerWrapperClass> actual = this.sut.giveMeBuilder(expected)
 			.set("value", 1);
 
-		then(actual.sample().value).isEqualTo(1);
+		return actual.build();
 	}
 
 	@Property
-	void giveMeObjectToBuilderSetIndex() {
+	void giveMeObjectToBuilderSet(@ForAll("objectToBuilderSet") IntegerWrapperClass actual) {
+		then(actual.value).isEqualTo(1);
+	}
+
+	@Provide
+	Arbitrary<IntegerListClass> objectToBuilderSetIndex() {
 		IntegerListClass expected = this.sut.giveMeBuilder(IntegerListClass.class)
 			.spec(new ExpressionSpec().size("values", 2, 2))
 			.sample();
 
-		ArbitraryBuilder<IntegerListClass> actual = this.sut.giveMeBuilder(expected)
-			.set("values[1]", 1);
-
-		then(actual.sample().values.get(1)).isEqualTo(1);
+		return this.sut.giveMeBuilder(expected)
+			.set("values[1]", 1)
+			.build();
 	}
 
 	@Property
-	void giveMeArrayToBuilder() {
+	void giveMeObjectToBuilderSetIndex(@ForAll("objectToBuilderSetIndex") IntegerListClass actual) {
+		then(actual.values.get(1)).isEqualTo(1);
+	}
+
+	@Provide
+	Arbitrary<IntegerArrayClass> arrayToBuilder() {
 		IntegerArrayClass expected = new IntegerArrayClass(new Integer[] {1, 2, 3});
 
-		IntegerArrayClass actual = this.sut.giveMeBuilder(expected).sample();
-
-		then(actual).isEqualTo(expected);
+		return this.sut.giveMeBuilder(expected).build();
 	}
 
 	@Property
-	void giveMePrimitiveArrayToBuilder() {
+	void giveMeArrayToBuilder(@ForAll("arrayToBuilder") IntegerArrayClass actual) {
+		then(actual.value[0]).isEqualTo(1);
+		then(actual.value[1]).isEqualTo(2);
+		then(actual.value[2]).isEqualTo(3);
+	}
+
+	@Provide
+	Arbitrary<IntArrayClass> primitiveArrayToBuilder() {
 		IntArrayClass expected = new IntArrayClass(new int[] {1, 2, 3});
 
-		IntArrayClass actual = this.sut.giveMeBuilder(expected).sample();
-
-		then(actual).isEqualTo(expected);
+		return this.sut.giveMeBuilder(expected).build();
 	}
 
 	@Property
-	void giveMeSameKeyValueMapToBuilder() {
+	void giveMePrimitiveArrayToBuilder(@ForAll("primitiveArrayToBuilder") IntArrayClass actual) {
+		then(actual.value[0]).isEqualTo(1);
+		then(actual.value[1]).isEqualTo(2);
+		then(actual.value[2]).isEqualTo(3);
+	}
+
+	@Provide
+	Arbitrary<MapKeyIntegerValueIntegerClass> sameKeyValueMapToBuilder() {
 		Map<Integer, Integer> values = new HashMap<>();
 		values.put(1, 1);
 		MapKeyIntegerValueIntegerClass expected = new MapKeyIntegerValueIntegerClass(values);
 
-		MapKeyIntegerValueIntegerClass actual = this.sut.giveMeBuilder(expected).sample();
-
-		then(actual).isEqualTo(expected);
+		return this.sut.giveMeBuilder(expected).build();
 	}
 
 	@Property
-	void giveMeDiffKeyValueMapToBuilder() {
+	void giveMeSameKeyValueMapToBuilder(
+		@ForAll("sameKeyValueMapToBuilder") MapKeyIntegerValueIntegerClass actual
+	) {
+		then(actual.values.get(1)).isEqualTo(1);
+	}
+
+	@Provide
+	Arbitrary<MapKeyIntegerValueStringClass> diffKeyValueMapToBuilder() {
 		Map<Integer, String> values = new HashMap<>();
 		values.put(1, "1");
 		MapKeyIntegerValueStringClass expected = new MapKeyIntegerValueStringClass(values);
 
-		MapKeyIntegerValueStringClass actual = this.sut.giveMeBuilder(expected).sample();
-
-		then(actual).isEqualTo(expected);
+		return this.sut.giveMeBuilder(expected).build();
 	}
 
 	@Property
-	void giveMeMapEntryToBuilder() {
+	void giveMeDiffKeyValueMapToBuilder(@ForAll("diffKeyValueMapToBuilder") MapKeyIntegerValueStringClass actual) {
+		then(actual.values.get(1)).isEqualTo("1");
+	}
+
+	@Provide
+	Arbitrary<MapEntryKeyIntegerValueStringClass> mapEntryToBuilder() {
 		Map.Entry<Integer, String> value = new SimpleEntry<>(1, "1");
 		MapEntryKeyIntegerValueStringClass expected = new MapEntryKeyIntegerValueStringClass(value);
 
-		MapEntryKeyIntegerValueStringClass actual = this.sut.giveMeBuilder(expected).sample();
-
-		then(actual).isEqualTo(expected);
+		return this.sut.giveMeBuilder(expected).build();
 	}
 
 	@Property
-	void giveMeSetToBuilder() {
+	void giveMeMapEntryToBuilder(@ForAll("mapEntryToBuilder") MapEntryKeyIntegerValueStringClass actual) {
+		then(actual.value.getValue()).isEqualTo("1");
+	}
+
+	@Provide
+	Arbitrary<IntegerSetClass> setToBuilder() {
 		Set<Integer> values = new HashSet<>();
 		values.add(1);
 		IntegerSetClass expected = new IntegerSetClass(values);
 
-		IntegerSetClass actual = this.sut.giveMeBuilder(expected).sample();
-
-		then(actual).isEqualTo(expected);
+		return this.sut.giveMeBuilder(expected).build();
 	}
 
 	@Property
-	void giveMeIterableToBuilder() {
+	void giveMeSetToBuilder(@ForAll("setToBuilder") IntegerSetClass actual) {
+		then(actual.values).allMatch(it -> it == 1);
+	}
+
+	@Provide
+	Arbitrary<IntegerIterableClass> iterableToBuilder() {
 		List<Integer> values = new ArrayList<>();
 		values.add(1);
 		IntegerIterableClass expected = new IntegerIterableClass(values);
 
-		IntegerIterableClass actual = sut.giveMeBuilder(expected).sample();
-
-		then(actual).isEqualTo(actual);
+		return sut.giveMeBuilder(expected)
+			.build();
 	}
 
 	@Property
-	void giveMeIteratorToBuilder() {
+	void giveMeIterableToBuilder(@ForAll("iterableToBuilder") IntegerIterableClass actual) {
+		then(actual.values).allMatch(it -> it == 1);
+	}
+
+	@Provide
+	Arbitrary<IntegerIteratorClass> iteratorToBuilder() {
 		FixtureMonkey sut = FixtureMonkey.builder()
 			.defaultGenerator(BuilderArbitraryGenerator.INSTANCE)
 			.build();
@@ -502,13 +595,16 @@ class FixtureMonkeyTest {
 		values.add(1);
 		IntegerIteratorClass expected = new IntegerIteratorClass(values.iterator());
 
-		IntegerIteratorClass actual = sut.giveMeBuilder(expected).sample();
-
-		then(actual).isEqualTo(actual);
+		return sut.giveMeBuilder(expected).build();
 	}
 
 	@Property
-	void giveMeStreamToBuilder() {
+	void giveMeIteratorToBuilder(@ForAll("iteratorToBuilder") IntegerIteratorClass actual) {
+		then(actual.values.next()).isEqualTo(1);
+	}
+
+	@Provide
+	Arbitrary<IntegerStreamClass> streamToBuilder() {
 		FixtureMonkey sut = FixtureMonkey.builder()
 			.defaultGenerator(BuilderArbitraryGenerator.INSTANCE)
 			.build();
@@ -516,185 +612,230 @@ class FixtureMonkeyTest {
 		values.add(1);
 		IntegerStreamClass expected = new IntegerStreamClass(values.stream());
 
-		IntegerStreamClass actual = sut.giveMeBuilder(expected).sample();
-
-		then(actual).isEqualTo(actual);
+		return sut.giveMeBuilder(expected).build();
 	}
 
 	@Property
-	void giveMeOptionalToBuilder() {
+	void giveMeStreamToBuilder(@ForAll("streamToBuilder") IntegerStreamClass actual) {
+		then(actual.values).allMatch(it -> it == 1);
+	}
+
+	@Provide
+	Arbitrary<IntegerOptionalClass> optionalToBuilder() {
 		FixtureMonkey sut = FixtureMonkey.builder()
 			.defaultGenerator(BuilderArbitraryGenerator.INSTANCE)
 			.build();
-		Optional<Integer> value = Optional.of(1);
-		IntegerOptionalClass expected = new IntegerOptionalClass(value);
 
-		IntegerOptionalClass actual = sut.giveMeBuilder(expected).sample();
-
-		then(actual).isEqualTo(actual);
+		return sut.giveMeBuilder(new IntegerOptionalClass(Optional.of(1))).build();
 	}
 
 	@Property
-	void giveMeOptionalEmptyToBuilder() {
+	void giveMeOptionalToBuilder(@ForAll("optionalToBuilder") IntegerOptionalClass actual) {
+		then(actual.value.get()).isEqualTo(1);
+	}
+
+	@Provide
+	Arbitrary<IntegerOptionalClass> optionalEmptyToBuilder() {
 		FixtureMonkey sut = FixtureMonkey.builder()
 			.defaultGenerator(BuilderArbitraryGenerator.INSTANCE)
 			.build();
 		Optional<Integer> value = Optional.empty();
 		IntegerOptionalClass expected = new IntegerOptionalClass(value);
 
-		IntegerOptionalClass actual = sut.giveMeBuilder(expected).sample();
-
-		then(actual).isEqualTo(actual);
+		return sut.giveMeBuilder(expected).build();
 	}
 
 	@Property
-	void giveMeSetLimitReturnsNotSet() {
-		IntegerWrapperClass actual = this.sut.giveMeBuilder(IntegerWrapperClass.class)
-			.set("value", 1, 0)
-			.sample();
+	void giveMeOptionalEmptyToBuilder(@ForAll("optionalEmptyToBuilder") IntegerOptionalClass actual) {
+		then(actual.value).isEqualTo(Optional.empty());
+	}
 
+	@Provide
+	Arbitrary<IntegerWrapperClass> setLimit() {
+		return this.sut.giveMeBuilder(IntegerWrapperClass.class)
+			.set("value", 1, 0)
+			.build();
+	}
+
+	@Property
+	void giveMeSetLimitReturnsNotSet(@ForAll("setLimit") IntegerWrapperClass actual) {
 		then(actual.value).isBetween(Integer.MIN_VALUE, Integer.MAX_VALUE);
 	}
 
-	@Property
-	void giveMeSpecSetWithLimitReturnsNotSet() {
-		IntegerWrapperClass actual = this.sut.giveMeBuilder(IntegerWrapperClass.class)
+	@Provide
+	Arbitrary<IntegerWrapperClass> specSetWithLimit() {
+		return this.sut.giveMeBuilder(IntegerWrapperClass.class)
 			.spec(new ExpressionSpec()
 				.set("value", 1, 0))
-			.sample();
-
-		then(actual.value).isBetween(Integer.MIN_VALUE, Integer.MAX_VALUE);
+			.build();
 	}
 
 	@Property
-	void giveMeSpecSetIndexWithLimitReturns() {
-		StringListClass actual = this.sut.giveMeBuilder(StringListClass.class)
+	void giveMeSpecSetWithLimit(@ForAll("specSetWithLimit") IntegerWrapperClass actual) {
+		then(actual.value).isBetween(Integer.MIN_VALUE, Integer.MAX_VALUE);
+	}
+
+	@Provide
+	Arbitrary<StringListClass> specSetIndexWithLimit() {
+		return this.sut.giveMeBuilder(StringListClass.class)
 			.spec(new ExpressionSpec()
 				.size("values", 2, 2)
 				.set("values[*]", "set", 1))
-			.sample();
-
-		then(actual.values).anyMatch(it -> !it.equals("set"));
+			.build();
 	}
 
 	@Property
-	void giveMeSetIndexWithLimitReturns() {
-		StringListClass actual = this.sut.giveMeBuilder(StringListClass.class)
+	void giveMeSpecSetIndexWithLimitReturns(@ForAll("specSetIndexWithLimit") StringListClass actual) {
+		then(actual.values).anyMatch(it -> !it.equals("set"));
+	}
+
+	@Provide
+	Arbitrary<StringListClass> setIndexWithLimit() {
+		return this.sut.giveMeBuilder(StringListClass.class)
 			.size("values", 2, 2)
 			.set("values[*]", "set", 1)
-			.sample();
-
-		then(actual.values).anyMatch(it -> !it.equals("set"));
+			.build();
 	}
 
 	@Property
-	void copy() {
+	void giveMeSetIndexWithLimitReturns(@ForAll("setIndexWithLimit") StringListClass actual) {
+		then(actual.values).anyMatch(it -> !it.equals("set"));
+	}
+
+	@Provide
+	Arbitrary<IntegerArrayClass> copyArbitrary() {
 		IntegerArrayClass expected = new IntegerArrayClass(new Integer[] {1, 2, 3});
 
 		ArbitraryBuilder<IntegerArrayClass> builder = this.sut.giveMeBuilder(expected);
-		ArbitraryBuilder<IntegerArrayClass> copiedBuilder = builder.copy();
+		ArbitraryBuilder<IntegerArrayClass> copiedBuilder = builder.copy()
+			.set("value[1]", 3);
 
-		IntegerArrayClass actual = builder.set("value[1]", 3).sample();
-		IntegerArrayClass copied = copiedBuilder.sample();
-
-		then(actual.value[0]).isEqualTo(copied.value[0]);
-		then(actual.value[1]).isNotEqualTo(copied.value[1]);
-		then(actual.value[1]).isEqualTo(3);
-		then(actual.value[2]).isEqualTo(copied.value[2]);
+		return copiedBuilder.build();
 	}
 
 	@Property
-	void copyWithManipulator() {
-		IntegerArrayClass expected = new IntegerArrayClass(new Integer[] {1, 2, 3});
+	void copy(@ForAll("copyArbitrary") IntegerArrayClass actual) {
+		then(actual.value[0]).isEqualTo(1);
+		then(actual.value[1]).isNotEqualTo(2);
+		then(actual.value[1]).isEqualTo(3);
+		then(actual.value[2]).isEqualTo(3);
+	}
 
+	@Provide
+	Arbitrary<IntegerArrayClass> copyArbitaryWithManipulator() {
+		IntegerArrayClass expected = new IntegerArrayClass(new Integer[] {1, 2, 3});
 		ArbitraryBuilder<IntegerArrayClass> builder = this.sut.giveMeBuilder(expected)
 			.set("value[0]", -1);
-		ArbitraryBuilder<IntegerArrayClass> copiedBuilder = builder.copy();
 
-		IntegerArrayClass actual = builder.sample();
-		IntegerArrayClass copied = copiedBuilder.sample();
-
-		then(actual.value[0]).isEqualTo(copied.value[0]);
-		then(actual.value[1]).isEqualTo(copied.value[1]);
-		then(actual.value[2]).isEqualTo(copied.value[2]);
+		return builder.copy().build();
 	}
 
 	@Property
-	void giveMeFilterLimitIndex() {
-		StringListClass actual = this.sut.giveMeBuilder(StringListClass.class)
+	void copyWithManipulator(@ForAll("copyArbitaryWithManipulator") IntegerArrayClass actual) {
+		then(actual.value[0]).isEqualTo(-1);
+		then(actual.value[1]).isEqualTo(2);
+		then(actual.value[2]).isEqualTo(3);
+	}
+
+	@Provide
+	Arbitrary<StringListClass> filterLimitIndex() {
+		return this.sut.giveMeBuilder(StringListClass.class)
 			.size("values", 2, 2)
 			.filter("values[*]", String.class, it -> it.length() > 0)
 			.filter("values[*]", String.class, it -> it.length() > 5, 1)
-			.sample();
+			.build();
+	}
 
+	@Property
+	void giveMeFilterLimitIndex(@ForAll("filterLimitIndex") StringListClass actual) {
 		then(actual.values).anyMatch(it -> it.length() > 5);
 	}
 
-	@Property
-	void giveMeFilterLimitIndexReturnsNotFilter() {
-		StringListClass actual = this.sut.giveMeBuilder(StringListClass.class)
+	@Provide
+	Arbitrary<StringListClass> filterLimitIndexNotOverwriteIfLimitIsZero() {
+		return this.sut.giveMeBuilder(StringListClass.class)
 			.filter("values[*]", String.class, it -> it.length() > 5)
 			.filter("values[*]", String.class, it -> it.length() == 0, 0)
-			.sample();
+			.build();
+	}
 
+	@Property
+	void giveMefilterLimitIndexNotOverwriteIfLimitIsZeroReturnsNotFilter(
+		@ForAll("filterLimitIndexNotOverwriteIfLimitIsZero") StringListClass actual
+	) {
 		then(actual.values).allMatch(it -> it.length() > 5);
 	}
 
-	@Property
-	void giveMeSpecListSetSize() {
-		IntegerListClass actual = this.sut.giveMeBuilder(IntegerListClass.class)
+	@Provide
+	Arbitrary<IntegerListClass> specListSetSize() {
+		return this.sut.giveMeBuilder(IntegerListClass.class)
 			.spec(new ExpressionSpec().list("values", it -> it.ofSize(1)))
-			.sample();
-
-		then(actual.values).hasSize(1);
+			.build();
 	}
 
 	@Property
-	void giveMeSpecListSetElement() {
-		IntegerListClass actual = this.sut.giveMeBuilder(IntegerListClass.class)
+	void giveMeSpecListSetSize(@ForAll("specListSetSize") IntegerListClass actual) {
+		then(actual.values).hasSize(1);
+	}
+
+	@Provide
+	Arbitrary<IntegerListClass> specListSetElement() {
+		return this.sut.giveMeBuilder(IntegerListClass.class)
 			.spec(new ExpressionSpec().list("values", it -> {
 				it.ofSize(1);
 				it.setElement(0, 1);
 			}))
-			.sample();
+			.build();
+	}
 
+	@Property
+	void giveMeSpecListSetElement(@ForAll("specListSetElement") IntegerListClass actual) {
 		then(actual.values).hasSize(1);
 		then(actual.values.get(0)).isEqualTo(1);
 	}
 
-	@Property
-	void giveMeSpecListAnySet() {
-		IntegerListClass actual = this.sut.giveMeBuilder(IntegerListClass.class)
+	@Provide
+	Arbitrary<IntegerListClass> specListAnySet() {
+		return this.sut.giveMeBuilder(IntegerListClass.class)
 			.spec(new ExpressionSpec().list("values", it -> {
 				it.ofSize(3);
 				it.any(1);
 			}))
-			.sample();
-
-		then(actual.values).anyMatch(it -> it == 1);
+			.build();
 	}
 
 	@Property
-	void giveMeSpecListAllSet() {
-		IntegerListClass actual = this.sut.giveMeBuilder(IntegerListClass.class)
+	void giveMeSpecListAnySet(@ForAll("specListAnySet") IntegerListClass actual) {
+		then(actual.values).anyMatch(it -> it == 1);
+	}
+
+	@Provide
+	Arbitrary<IntegerListClass> specListAllSet() {
+		return this.sut.giveMeBuilder(IntegerListClass.class)
 			.spec(new ExpressionSpec().list("values", it -> {
 				it.ofSize(3);
 				it.all(1);
 			}))
-			.sample();
-
-		then(actual.values).allMatch(it -> it == 1);
+			.build();
 	}
 
 	@Property
-	void giveMeSpecListFilterElement() {
-		IntegerListClass actual = this.sut.giveMeBuilder(IntegerListClass.class)
+	void giveMeSpecListAllSet(@ForAll("specListAllSet") IntegerListClass actual) {
+		then(actual.values).allMatch(it -> it == 1);
+	}
+
+	@Provide
+	Arbitrary<IntegerListClass> specListFilterElement() {
+		return this.sut.giveMeBuilder(IntegerListClass.class)
 			.spec(new ExpressionSpec().list("values", it -> {
 				it.ofSize(1);
 				it.<Integer>filterElement(0, filtered -> filtered > 1);
 			}))
-			.sample();
+			.build();
+	}
 
+	@Property
+	void giveMeSpecListFilterElement(@ForAll("specListFilterElement") IntegerListClass actual) {
 		then(actual.values).hasSize(1);
 		then(actual.values.get(0)).isGreaterThan(1);
 	}
@@ -817,18 +958,21 @@ class FixtureMonkeyTest {
 		then(actual).isNotNull();
 	}
 
-	@Property
-	void giveMeSizeMap() {
-		MapKeyIntegerValueIntegerClass actual = this.sut.giveMeBuilder(MapKeyIntegerValueIntegerClass.class)
+	@Provide
+	Arbitrary<MapKeyIntegerValueIntegerClass> sizeMap() {
+		return this.sut.giveMeBuilder(MapKeyIntegerValueIntegerClass.class)
 			.size("values", 2, 2)
-			.sample();
-
-		then(actual.values).hasSize(2);
+			.build();
 	}
 
 	@Property
-	void giveMeSetRightOrder() {
-		StringListClass actual = this.sut.giveMeBuilder(StringListClass.class)
+	void giveMeSizeMap(@ForAll("sizeMap") MapKeyIntegerValueIntegerClass actual) {
+		then(actual.values).hasSize(2);
+	}
+
+	@Provide
+	Arbitrary<StringListClass> setRightOrder() {
+		return this.sut.giveMeBuilder(StringListClass.class)
 			.spec(new ExpressionSpec()
 				.list("values",
 					it -> it.ofSize(3)
@@ -837,8 +981,11 @@ class FixtureMonkeyTest {
 						.setElement(2, "field3")
 				)
 			)
-			.sample();
+			.build();
+	}
 
+	@Property
+	void giveMeSetRightOrder(@ForAll("setRightOrder") StringListClass actual) {
 		List<String> values = actual.getValues();
 		then(values.size()).isEqualTo(3);
 		then(values.get(0)).isEqualTo("field1");
@@ -846,100 +993,125 @@ class FixtureMonkeyTest {
 		then(values.get(2)).isEqualTo("field3");
 	}
 
-	@Property
-	void giveMeFilterRightOrder() {
-		StringListClass actual = this.sut.giveMeBuilder(StringListClass.class)
+	@Provide
+	Arbitrary<StringListClass> filterRightOrder() {
+		return this.sut.giveMeBuilder(StringListClass.class)
 			.spec(new ExpressionSpec()
 				.list("values",
 					(it) -> it.ofSize(2)
 						.filterElement(0, (Predicate<String>)s -> s.length() > 5)
 						.filterElement(1, (Predicate<String>)s -> s.length() > 10)
 				))
-			.sample();
+			.build();
+	}
 
+	@Property
+	void giveMeFilterRightOrder(@ForAll("filterRightOrder") StringListClass actual) {
 		List<String> values = actual.getValues();
 		then(values.size()).isEqualTo(2);
 		then(values.get(0).length()).isGreaterThan(5);
 		then(values.get(1).length()).isGreaterThan(10);
 	}
 
-	@Property
-	void giveMeListSpecMinSize() {
-		StringListClass actual = this.sut.giveMeBuilder(StringListClass.class)
+	@Provide
+	Arbitrary<StringListClass> listSpecMinSize() {
+		return this.sut.giveMeBuilder(StringListClass.class)
 			.spec(new ExpressionSpec()
 				.list("values",
 					it -> it.ofMinSize(1)
 				)
-			).sample();
-
-		then(actual.values.size()).isGreaterThanOrEqualTo(1);
+			)
+			.build();
 	}
 
 	@Property
-	void giveMeListSpecMaxSize() {
-		StringListClass actual = this.sut.giveMeBuilder(StringListClass.class)
+	void giveMeListSpecMinSize(@ForAll("listSpecMinSize") StringListClass actual) {
+		then(actual.values.size()).isGreaterThanOrEqualTo(1);
+	}
+
+	@Provide
+	Arbitrary<StringListClass> listSpecMaxSize() {
+		return this.sut.giveMeBuilder(StringListClass.class)
 			.spec(new ExpressionSpec()
 				.list("values",
 					it -> it.ofMaxSize(2)
 				)
 			)
-			.sample();
-
-		then(actual.values.size()).isLessThanOrEqualTo(2);
+			.build();
 	}
 
 	@Property
-	void giveMeListSpecSizeBetween() {
-		StringListClass actual = this.sut.giveMeBuilder(StringListClass.class)
+	void giveMeListSpecMaxSize(@ForAll("listSpecMaxSize") StringListClass actual) {
+		then(actual.values.size()).isLessThanOrEqualTo(2);
+	}
+
+	@Provide
+	Arbitrary<StringListClass> listSpecSizeBetween() {
+		return this.sut.giveMeBuilder(StringListClass.class)
 			.spec(new ExpressionSpec()
 				.list("values",
 					it -> it.ofSizeBetween(1, 3)
 				)
 			)
-			.sample();
-
-		then(actual.values.size()).isBetween(1, 3);
+			.build();
 	}
 
 	@Property
-	void giveMeSetAllName() {
-		TwoStringClass actual = this.sut.giveMeBuilder(TwoStringClass.class)
-			.set("*", "set")
-			.sample();
+	void giveMeListSpecSizeBetween(@ForAll("listSpecSizeBetween") StringListClass actual) {
+		then(actual.values.size()).isBetween(1, 3);
+	}
 
+	@Provide
+	Arbitrary<TwoStringClass> setAllName() {
+		return this.sut.giveMeBuilder(TwoStringClass.class)
+			.set("*", "set")
+			.build();
+	}
+
+	@Property
+	void giveMeSetAllName(@ForAll("setAllName") TwoStringClass actual) {
 		then(actual.value1).isEqualTo("set");
 		then(actual.value2).isEqualTo("set");
 	}
 
-	@Property
-	void giveMeListExactSize() {
-		StringListClass actual = this.sut.giveMeBuilder(StringListClass.class)
+	@Provide
+	Arbitrary<StringListClass> listExactSize() {
+		return this.sut.giveMeBuilder(StringListClass.class)
 			.size("values", 3)
-			.sample();
+			.build();
+	}
 
+	@Property
+	void giveMeListExactSize(@ForAll("listExactSize") StringListClass actual) {
 		then(actual.values.size()).isEqualTo(3);
 	}
 
-	@Property
-	void giveMeZipWith() {
+	@Provide
+	Arbitrary<String> zipWith() {
 		ArbitraryBuilder<String> stringArbitraryBuilder = this.sut.giveMeBuilder(String.class);
-		String actual = this.sut.giveMeBuilder(Integer.class)
+		return this.sut.giveMeBuilder(Integer.class)
 			.zipWith(stringArbitraryBuilder, (integer, string) -> integer + "" + string)
-			.sample();
-
-		then(actual).isNotNull();
+			.build();
 	}
 
 	@Property
-	void giveMeZipTwoElement() {
+	void giveMeZipWith(@ForAll("zipWith") String actual) {
+		then(actual).isNotNull();
+	}
+
+	@Provide
+	Arbitrary<String> zipTwoElement() {
 		ArbitraryBuilder<String> stringArbitraryBuilder = this.sut.giveMeBuilder(String.class);
 		ArbitraryBuilder<Integer> integerArbitraryBuilder = this.sut.giveMeBuilder(Integer.class);
-		String actual = ArbitraryBuilders.zip(
+		return ArbitraryBuilders.zip(
 			stringArbitraryBuilder,
 			integerArbitraryBuilder,
 			(integer, string) -> integer + "" + string
-		).sample();
+		).build();
+	}
 
+	@Property
+	void giveMeZipTwoElement(@ForAll("zipTwoElement") String actual) {
 		then(actual).isNotNull();
 	}
 
@@ -971,77 +1143,101 @@ class FixtureMonkeyTest {
 		then(result1).isNotEqualTo(result2);
 	}
 
-	@Property
-	void giveMeBuilderSetNull() {
-		StringWrapperClass actual = this.sut.giveMeBuilder(StringWrapperClass.class)
+	@Provide
+	Arbitrary<StringWrapperClass> builderSetNull() {
+		return this.sut.giveMeBuilder(StringWrapperClass.class)
 			.set("value", null)
-			.sample();
+			.build();
+	}
 
+	@Property
+	void giveMeBuilderSetNull(@ForAll("builderSetNull") StringWrapperClass actual) {
 		then(actual.value).isNull();
 	}
 
-	@Property
-	void giveMeMinSize() {
-		IntegerListClass actual = this.sut.giveMeBuilder(IntegerListClass.class)
+	@Provide
+	Arbitrary<IntegerListClass> minSize() {
+		return this.sut.giveMeBuilder(IntegerListClass.class)
 			.minSize("values", 2)
-			.sample();
+			.build();
+	}
 
+	@Property
+	void giveMeMinSize(@ForAll("minSize") IntegerListClass actual) {
 		then(actual.values.size()).isGreaterThanOrEqualTo(2);
 	}
 
-	@Property
-	void giveMeMaxSize() {
-		IntegerListClass actual = this.sut.giveMeBuilder(IntegerListClass.class)
+	@Provide
+	Arbitrary<IntegerListClass> maxSize() {
+		return this.sut.giveMeBuilder(IntegerListClass.class)
 			.maxSize("values", 10)
-			.sample();
+			.build();
+	}
 
+	@Property
+	void giveMeMaxSize(@ForAll("maxSize") IntegerListClass actual) {
 		then(actual.values.size()).isLessThanOrEqualTo(10);
 	}
 
-	@Property
-	void giveMeSizeMinMaxBiggerThanDefault() {
-		IntegerListClass actual = this.sut.giveMeBuilder(IntegerListClass.class)
+	@Provide
+	Arbitrary<IntegerListClass> sizeMinMaxBiggerThanDefault() {
+		return this.sut.giveMeBuilder(IntegerListClass.class)
 			.size("values", 100, 150)
-			.sample();
+			.build();
+	}
 
+	@Property(tries = 10)
+	void giveMeSizeMinMaxBiggerThanDefault(@ForAll("sizeMinMaxBiggerThanDefault") IntegerListClass actual) {
 		then(actual.values.size()).isBetween(100, 150);
 	}
 
-	@Property
-	void giveMeSizeMinBiggerThanDefaultMax() {
-		IntegerListClass actual = this.sut.giveMeBuilder(IntegerListClass.class)
+	@Provide
+	Arbitrary<IntegerListClass> sizeMinBiggerThanDefaultMax() {
+		return this.sut.giveMeBuilder(IntegerListClass.class)
 			.minSize("values", 100)
-			.sample();
+			.build();
+	}
 
+	@Property(tries = 10)
+	void giveMeSizeMinBiggerThanDefaultMax(@ForAll("sizeMinBiggerThanDefaultMax") IntegerListClass actual) {
 		then(actual.values.size()).isBetween(100, 110);
 	}
 
-	@Property
-	void giveMeSizeMaxSizeIsZero() {
-		IntegerListClass actual = this.sut.giveMeBuilder(IntegerListClass.class)
+	@Provide
+	Arbitrary<IntegerListClass> sizeMaxSizeIsZero() {
+		return this.sut.giveMeBuilder(IntegerListClass.class)
 			.maxSize("values", 0)
-			.sample();
+			.build();
+	}
 
+	@Property
+	void giveMeSizeMaxSizeIsZero(@ForAll("sizeMaxSizeIsZero") IntegerListClass actual) {
 		then(actual.values).isEmpty();
 	}
 
-	@Property
-	void giveMeSizeMaxSizeBeforeMinSizeIsZero() {
-		IntegerListClass actual = this.sut.giveMeBuilder(IntegerListClass.class)
+	@Provide
+	Arbitrary<IntegerListClass> sizeMaxSizeBeforeMinSizeIsZero() {
+		return this.sut.giveMeBuilder(IntegerListClass.class)
 			.maxSize("values", 15)
 			.minSize("values", 14)
-			.sample();
-
-		then(actual.values.size()).isBetween(14, 15);
+			.build();
 	}
 
 	@Property
-	void giveMeSizeMinSizeBeforeMaxSizeIsZero() {
-		IntegerListClass actual = this.sut.giveMeBuilder(IntegerListClass.class)
+	void giveMeSizeMaxSizeBeforeMinSizeIsZero(@ForAll("sizeMaxSizeBeforeMinSizeIsZero") IntegerListClass actual) {
+		then(actual.values.size()).isBetween(14, 15);
+	}
+
+	@Provide
+	Arbitrary<IntegerListClass> sizeMinSizeBeforeMaxSizeIsZero() {
+		return this.sut.giveMeBuilder(IntegerListClass.class)
 			.minSize("values", 14)
 			.maxSize("values", 15)
-			.sample();
+			.build();
+	}
 
+	@Property
+	void giveMeSizeMinSizeBeforeMaxSizeIsZero(@ForAll("sizeMinSizeBeforeMaxSizeIsZero") IntegerListClass actual) {
 		then(actual.values.size()).isBetween(14, 15);
 	}
 
