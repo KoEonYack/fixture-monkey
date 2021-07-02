@@ -24,14 +24,13 @@ public final class ArbitrarySet<T> extends AbstractArbitrarySet<T> {
 		return value;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
-	public Arbitrary<T> apply(Arbitrary<?> from) {
+	public Arbitrary<T> apply(Arbitrary<T> from) {
 		if (this.limit > 0) {
 			limit--;
 			return Arbitraries.just(value);
 		} else {
-			return (Arbitrary<T>)from;
+			return from;
 		}
 	}
 

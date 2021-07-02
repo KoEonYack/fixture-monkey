@@ -7,16 +7,15 @@ import net.jqwik.api.Arbitrary;
 
 import com.navercorp.fixturemonkey.TypeSupports;
 
-@SuppressWarnings("unchecked")
-public final class ArbitraryFilter<T> implements PostArbitraryManipulator<T> {
-	private ArbitraryExpression arbitraryExpression;
+public final class ArbitraryFilter<T> extends AbstractArbitraryExpressionManipulator
+	implements PostArbitraryManipulator<T> {
 	private final Class<T> clazz;
 	private final Predicate<T> filter;
 	private long limit;
 
 	public ArbitraryFilter(Class<T> clazz, ArbitraryExpression arbitraryExpression, Predicate<T> filter, long limit) {
+		super(arbitraryExpression);
 		this.clazz = clazz;
-		this.arbitraryExpression = arbitraryExpression;
 		this.filter = filter;
 		this.limit = limit;
 	}
@@ -30,12 +29,12 @@ public final class ArbitraryFilter<T> implements PostArbitraryManipulator<T> {
 	}
 
 	@Override
-	public Arbitrary<T> apply(Arbitrary<?> from) {
+	public Arbitrary<T> apply(Arbitrary<T> from) {
 		if (this.limit > 0) {
 			limit--;
-			return ((Arbitrary<T>)from).filter(filter);
+			return from.filter(filter);
 		} else {
-			return (Arbitrary<T>)from;
+			return from;
 		}
 	}
 
@@ -45,20 +44,11 @@ public final class ArbitraryFilter<T> implements PostArbitraryManipulator<T> {
 	}
 
 	@Override
-	public void addPrefix(String expression) {
-		arbitraryExpression = arbitraryExpression.appendLeft(expression);
-	}
-
-	@Override
-	public ArbitraryExpression getArbitraryExpression() {
-		return arbitraryExpression;
-	}
-
-	@Override
 	public ArbitraryFilter<T> copy() {
-		return new ArbitraryFilter<>(this.clazz, this.arbitraryExpression, this.filter, this.limit);
+		return new ArbitraryFilter<>(this.clazz, this.getArbitraryExpression(), this.filter, this.limit);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj) {
@@ -67,7 +57,7 @@ public final class ArbitraryFilter<T> implements PostArbitraryManipulator<T> {
 		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
-		ArbitraryFilter<?> that = (ArbitraryFilter<?>)obj;
+		ArbitraryFilter<T> that = (ArbitraryFilter<T>)obj;
 		return clazz.equals(that.clazz)
 			&& getArbitraryExpression().equals(that.getArbitraryExpression())
 			&& filter.equals(that.filter);

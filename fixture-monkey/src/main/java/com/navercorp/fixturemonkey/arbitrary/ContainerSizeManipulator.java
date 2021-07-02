@@ -6,8 +6,8 @@ import javax.annotation.Nullable;
 
 import com.navercorp.fixturemonkey.ArbitraryBuilder;
 
-public final class ContainerSizeManipulator implements MetadataManipulator {
-	private ArbitraryExpression arbitraryExpression;
+public final class ContainerSizeManipulator extends AbstractArbitraryExpressionManipulator
+	implements MetadataManipulator, BuilderManipulator {
 	private final Integer min;
 	private final Integer max;
 
@@ -16,7 +16,7 @@ public final class ContainerSizeManipulator implements MetadataManipulator {
 		@Nullable Integer min,
 		@Nullable Integer max
 	) {
-		this.arbitraryExpression = arbitraryExpression;
+		super(arbitraryExpression);
 		this.min = min;
 		this.max = max;
 	}
@@ -31,18 +31,9 @@ public final class ContainerSizeManipulator implements MetadataManipulator {
 		return max;
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
-	public ArbitraryExpression getArbitraryExpression() {
-		return arbitraryExpression;
-	}
-
-	@Override
-	public void addPrefix(String expression) {
-		arbitraryExpression = arbitraryExpression.appendLeft(expression);
-	}
-
-	@Override
-	public void accept(ArbitraryBuilder<?> arbitraryBuilder) {
+	public void accept(ArbitraryBuilder arbitraryBuilder) {
 		arbitraryBuilder.apply(this);
 	}
 
@@ -53,7 +44,7 @@ public final class ContainerSizeManipulator implements MetadataManipulator {
 
 	@Override
 	public ContainerSizeManipulator copy() {
-		return new ContainerSizeManipulator(this.arbitraryExpression, this.min, this.max);
+		return new ContainerSizeManipulator(this.getArbitraryExpression(), this.min, this.max);
 	}
 
 	@Override
@@ -65,13 +56,13 @@ public final class ContainerSizeManipulator implements MetadataManipulator {
 			return false;
 		}
 		ContainerSizeManipulator that = (ContainerSizeManipulator)obj;
-		return arbitraryExpression.equals(that.arbitraryExpression)
+		return getArbitraryExpression().equals(that.getArbitraryExpression())
 			&& Objects.equals(min, that.min)
 			&& Objects.equals(max, that.max);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(arbitraryExpression, min, max);
+		return Objects.hash(getArbitraryExpression(), min, max);
 	}
 }

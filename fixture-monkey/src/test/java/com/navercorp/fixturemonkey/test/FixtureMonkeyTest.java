@@ -631,6 +631,7 @@ class FixtureMonkeyTest {
 
 	@Property
 	void giveMeOptionalToBuilder(@ForAll("optionalToBuilder") IntegerOptionalClass actual) {
+		//noinspection OptionalGetWithoutIsPresent
 		then(actual.value.get()).isEqualTo(1);
 	}
 
@@ -1257,6 +1258,38 @@ class FixtureMonkeyTest {
 			it -> then(it).isNotEqualTo(actual2),
 			it -> then(it).isEqualTo("test")
 		);
+	}
+
+	@Provide
+	Arbitrary<IntegerListClass> specAny() {
+		ExpressionSpec specOne = new ExpressionSpec()
+			.list("values", it -> it
+				.ofSize(1)
+				.setElement(0, 1)
+			);
+		ExpressionSpec specTwo = new ExpressionSpec()
+			.list("values", it -> it
+				.ofSize(2)
+				.setElement(0, 1)
+				.setElement(1, 2)
+			);
+		return this.sut.giveMeBuilder(IntegerListClass.class)
+			.specAny(specOne, specTwo)
+			.build();
+	}
+
+	@Property
+	void giveMeSpecAny(@ForAll("specAny") IntegerListClass actual) {
+		IntegerListClass expectedOne = new IntegerListClass();
+		expectedOne.values = new ArrayList<>();
+		expectedOne.values.add(1);
+
+		IntegerListClass expectedTwo = new IntegerListClass();
+		expectedTwo.values = new ArrayList<>();
+		expectedTwo.values.add(1);
+		expectedTwo.values.add(2);
+
+		then(actual).isIn(expectedOne, expectedTwo);
 	}
 
 	@Data

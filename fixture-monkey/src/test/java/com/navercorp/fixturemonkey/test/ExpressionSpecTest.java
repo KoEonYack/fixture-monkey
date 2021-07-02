@@ -8,7 +8,6 @@ import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
 import net.jqwik.api.Property;
 
-import com.navercorp.fixturemonkey.arbitrary.ArbitraryExpression;
 import com.navercorp.fixturemonkey.customizer.ExpressionSpec;
 
 public class ExpressionSpecTest {
@@ -41,7 +40,7 @@ public class ExpressionSpecTest {
 
 		ExpressionSpec actual = merger.merge(merged);
 
-		then(actual.getPreArbitraryManipulators()).hasSize(2);
+		then(actual.getBuilderManipulators()).hasSize(2);
 	}
 
 	@Property
@@ -53,7 +52,7 @@ public class ExpressionSpecTest {
 
 		ExpressionSpec actual = merger.merge(merged, false);
 
-		then(actual.getPreArbitraryManipulators()).hasSize(1);
+		then(actual.getBuilderManipulators()).hasSize(1);
 	}
 
 	@Property
@@ -66,7 +65,7 @@ public class ExpressionSpecTest {
 
 		ExpressionSpec actual = merger.merge(merged);
 
-		then(actual.getPostArbitraryManipulators()).hasSize(2);
+		then(actual.getBuilderManipulators()).hasSize(2);
 	}
 
 	@Property
@@ -79,7 +78,7 @@ public class ExpressionSpecTest {
 
 		ExpressionSpec actual = merger.merge(merged, false);
 
-		then(actual.getPostArbitraryManipulators()).hasSize(2);
+		then(actual.getBuilderManipulators()).hasSize(2);
 	}
 
 	@Property
@@ -90,9 +89,7 @@ public class ExpressionSpecTest {
 
 		actual.exclude("test");
 
-		then(actual.getPreArbitraryManipulators()).hasSize(1);
-		then(actual.getPreArbitraryManipulators().get(0).getArbitraryExpression())
-			.isEqualTo(ArbitraryExpression.from("test2"));
+		then(actual.getBuilderManipulators()).hasSize(1);
 	}
 
 	@Property

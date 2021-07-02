@@ -137,7 +137,6 @@ public final class ArbitraryNode<T> {
 		setContainerSizeConstraint(new ContainerSizeConstraint(min, max));
 	}
 
-	@SuppressWarnings("rawtypes")
 	public void apply(PreArbitraryManipulator<T> preArbitraryManipulator) {
 		if (preArbitraryManipulator instanceof AbstractArbitrarySet) {
 			Object toValue = ((AbstractArbitrarySet<T>)preArbitraryManipulator).getValue();
@@ -156,9 +155,11 @@ public final class ArbitraryNode<T> {
 			Arbitrary<T> appliedArbitrary = preArbitraryManipulator.apply(status.arbitrary);
 			this.setFixed(true);
 			this.setArbitrary(appliedArbitrary);
-		} else if (preArbitraryManipulator instanceof ArbitrarySetNullity) {
-			this.setActive(!((ArbitrarySetNullity)preArbitraryManipulator).toNull());
 		}
+	}
+
+	public void apply(ArbitraryNullity manipulator) {
+		this.setActive(!manipulator.toNull());
 	}
 
 	public void setNullable(boolean nullable) {
