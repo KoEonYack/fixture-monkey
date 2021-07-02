@@ -103,9 +103,27 @@ public final class ExpressionSpec {
 		return this;
 	}
 
+	public ExpressionSpec size(String expression, int size) {
+		ArbitraryExpression fixtureExpression = ArbitraryExpression.from(expression);
+		builderManipulators.add(new ContainerSizeManipulator(fixtureExpression, size, size));
+		return this;
+	}
+
 	public ExpressionSpec size(String expression, int min, int max) {
 		ArbitraryExpression fixtureExpression = ArbitraryExpression.from(expression);
 		builderManipulators.add(new ContainerSizeManipulator(fixtureExpression, min, max));
+		return this;
+	}
+
+	public ExpressionSpec minSize(String expression, int min) {
+		ArbitraryExpression fixtureExpression = ArbitraryExpression.from(expression);
+		builderManipulators.add(new ContainerSizeManipulator(fixtureExpression, min, null));
+		return this;
+	}
+
+	public ExpressionSpec maxSize(String expression, int max) {
+		ArbitraryExpression fixtureExpression = ArbitraryExpression.from(expression);
+		builderManipulators.add(new ContainerSizeManipulator(fixtureExpression, null, max));
 		return this;
 	}
 
