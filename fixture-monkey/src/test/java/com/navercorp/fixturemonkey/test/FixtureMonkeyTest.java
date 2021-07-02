@@ -1315,6 +1315,33 @@ class FixtureMonkeyTest {
 		then(actual).isNull();
 	}
 
+	@Property
+	void toExpressionSpecSet() {
+		ExpressionSpec actual = this.sut.giveMeBuilder(IntegerWrapperClass.class)
+			.set("value", "test")
+			.toExpressionSpec();
+
+		then(actual.hasSet("value")).isTrue();
+	}
+
+	@Property
+	void toExpressionSpecFilter() {
+		ExpressionSpec actual = this.sut.giveMeBuilder(IntegerWrapperClass.class)
+			.filter("value", Integer.class, it -> true)
+			.toExpressionSpec();
+
+		then(actual.hasFilter("value")).isTrue();
+	}
+
+	@Property
+	void toExpressionSpecMeta() {
+		ExpressionSpec actual = this.sut.giveMeBuilder(IntegerWrapperClass.class)
+			.size("value", 1)
+			.toExpressionSpec();
+
+		then(actual.hasMetadata("value")).isTrue();
+	}
+
 	@Data
 	public static class IntegerWrapperClass {
 		int value;

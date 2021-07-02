@@ -37,7 +37,7 @@ public final class ExpressionSpec {
 		this(new ArrayList<>());
 	}
 
-	private ExpressionSpec(List<BuilderManipulator> builderManipulators) {
+	public ExpressionSpec(List<BuilderManipulator> builderManipulators) {
 		this.builderManipulators = builderManipulators;
 	}
 

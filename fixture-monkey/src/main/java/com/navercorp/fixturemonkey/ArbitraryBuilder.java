@@ -421,6 +421,12 @@ public final class ArbitraryBuilder<T> {
 		);
 	}
 
+	public ExpressionSpec toExpressionSpec() {
+		return new ExpressionSpec(this.builderManipulators.stream()
+			.map(BuilderManipulator::copy)
+			.collect(toList()));
+	}
+
 	private List<BuilderManipulator> extractOrderedManipulatorsFrom(List<BuilderManipulator> manipulators) {
 		return manipulators.stream()
 			.filter(it -> !(it instanceof MetadataManipulator))
