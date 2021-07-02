@@ -25,7 +25,6 @@ public class FixtureMonkeyBuilder {
 	private ArbitraryValidator validator = new CompositeArbitraryValidator();
 	private ArbitraryCustomizers arbitraryCustomizers = new ArbitraryCustomizers();
 	private ArbitraryOption options;
-	private Map<ArbitraryBuilder<?>, Arbitrary<?>> cacheMap = new ConcurrentHashMap<>();
 	private final FixtureOptionsBuilder optionsBuilder = ArbitraryOption.builder();
 
 	public FixtureMonkeyBuilder defaultGenerator(ArbitraryGenerator defaultCombiner) {
@@ -90,11 +89,6 @@ public class FixtureMonkeyBuilder {
 		AnnotatedArbitraryGenerator<?> generator
 	) {
 		this.optionsBuilder.addAnnotatedArbitraryGenerator(clazz, generator);
-		return this;
-	}
-
-	public FixtureMonkeyBuilder cacheMap(Map<ArbitraryBuilder<?>, Arbitrary<?>> cacheMap) {
-		this.cacheMap = cacheMap;
 		return this;
 	}
 
