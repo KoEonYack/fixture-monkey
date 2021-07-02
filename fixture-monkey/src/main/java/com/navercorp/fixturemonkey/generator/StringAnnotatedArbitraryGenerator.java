@@ -18,12 +18,9 @@ import net.jqwik.web.api.Web;
 
 public class StringAnnotatedArbitraryGenerator implements AnnotatedArbitraryGenerator<String> {
 	public static final StringAnnotatedArbitraryGenerator INSTANCE = new StringAnnotatedArbitraryGenerator();
-	private static final java.util.regex.Pattern EMPTY_PATTERN = java.util.regex.Pattern.compile("");
-	private static final java.util.regex.Pattern SPACE_PATTERN = java.util.regex.Pattern.compile(" ");
-	private static final java.util.regex.Pattern BLANK_PATTERN = java.util.regex.Pattern.compile("[\n\t ]");
-	private static final java.util.regex.Pattern CONTROL_BLOCK_PATTERN = java.util.regex.Pattern.compile(
-		"[\u0000-\u001f\u007f]");
 	private static final RegexGenerator REGEX_GENERATOR = new RegexGenerator();
+	private static final char[] WHITESPACE_CHARACTER = new char[] {' ', '\n', '\t', '\u000B', '\f', '\r', '\u001C',
+		'\u001D', '\u001E', '\u001F'};
 
 	@Override
 	public Arbitrary<String> generate(AnnotationSource annotationSource) {
@@ -86,20 +83,21 @@ public class StringAnnotatedArbitraryGenerator implements AnnotatedArbitraryGene
 			} else {
 				stringArbitrary = stringArbitrary.ascii();
 			}
+
+			for (char toExclude = '\u0000'; toExclude < '\u0020'; toExclude++) {
+				stringArbitrary = stringArbitrary.excludeChars(toExclude);
+			}
+
+			stringArbitrary = stringArbitrary.excludeChars('\u007f');
+
+			if (notBlank) {
+				stringArbitrary = stringArbitrary.excludeChars(WHITESPACE_CHARACTER)
+					.ofMinLength(1);
+			}
 			arbitrary = stringArbitrary;
 		}
 
-		boolean shouldReplaceBlankCharacter = notBlank;
-		return arbitrary.map(v -> {
-			String value = v;
-			if (value != null && shouldReplaceBlankCharacter && !isNotBlank(value)) {
-				value = EMPTY_PATTERN.matcher(value).replaceAll("a");
-				value = SPACE_PATTERN.matcher(value).replaceAll("b");
-				value = BLANK_PATTERN.matcher(value).replaceAll("c");
-				value = CONTROL_BLOCK_PATTERN.matcher(value).replaceAll("d");
-			}
-			return value;
-		});
+		return arbitrary;
 	}
 
 	private boolean isNotBlank(String value) {
