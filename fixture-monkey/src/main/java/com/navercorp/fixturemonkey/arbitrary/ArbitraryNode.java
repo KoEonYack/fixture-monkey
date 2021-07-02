@@ -356,7 +356,7 @@ public final class ArbitraryNode<T> {
 	private static final class FixtureNodeStatus<T> {
 		@Nullable
 		private Arbitrary<T> arbitrary = null; // immutable
-		private ContainerSizeConstraint containerSizeConstraint = new ContainerSizeConstraint(null, null); // immutable
+		private ContainerSizeConstraint containerSizeConstraint; // immutable
 		private List<PostArbitraryManipulator<T>> postArbitraryManipulators = new ArrayList<>();
 		private boolean nullable = false;
 		private boolean manipulated = false;

@@ -16,6 +16,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Positive;
 
 import net.jqwik.api.Arbitraries;
@@ -1292,6 +1293,17 @@ class FixtureMonkeyTest {
 		then(actual).isIn(expectedOne, expectedTwo);
 	}
 
+	@Provide
+	Arbitrary<IntegerListClassNotEmpty> notEmpty() {
+		return this.sut.giveMeBuilder(IntegerListClassNotEmpty.class)
+			.build();
+	}
+
+	@Property
+	void giveMeNotEmpty(@ForAll("notEmpty") IntegerListClassNotEmpty actual) {
+		then(actual.values).isNotEmpty();
+	}
+
 	@Data
 	public static class IntegerWrapperClass {
 		int value;
@@ -1446,5 +1458,11 @@ class FixtureMonkeyTest {
 		public boolean isEmpty() {
 			return value == null;
 		}
+	}
+
+	@Data
+	public static class IntegerListClassNotEmpty {
+		@NotEmpty
+		private List<Integer> values;
 	}
 }
