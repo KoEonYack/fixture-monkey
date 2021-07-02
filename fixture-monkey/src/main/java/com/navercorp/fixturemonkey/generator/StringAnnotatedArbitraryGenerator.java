@@ -1,8 +1,10 @@
 package com.navercorp.fixturemonkey.generator;
 
+import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,6 +46,7 @@ public class StringAnnotatedArbitraryGenerator implements AnnotatedArbitraryGene
 		Optional<NotBlank> notBlankAnnotations = annotationSource.findAnnotation(NotBlank.class);
 		if (notBlankAnnotations.isPresent()) {
 			notBlank = true;
+			min = BigDecimal.ONE;
 		}
 
 		Optional<Pattern> pattern = annotationSource.findAnnotation(Pattern.class);
@@ -84,16 +87,16 @@ public class StringAnnotatedArbitraryGenerator implements AnnotatedArbitraryGene
 				stringArbitrary = stringArbitrary.ascii();
 			}
 
+			StringBuilder sb = new StringBuilder();
 			for (char toExclude = '\u0000'; toExclude < '\u0020'; toExclude++) {
-				stringArbitrary = stringArbitrary.excludeChars(toExclude);
+				sb.append(toExclude);
 			}
-
-			stringArbitrary = stringArbitrary.excludeChars('\u007f');
+			sb.append('\u007f');
 
 			if (notBlank) {
-				stringArbitrary = stringArbitrary.excludeChars(WHITESPACE_CHARACTER)
-					.ofMinLength(1);
+				sb.append(WHITESPACE_CHARACTER);
 			}
+			stringArbitrary = stringArbitrary.excludeChars(sb.toString().toCharArray());
 			arbitrary = stringArbitrary;
 		}
 
