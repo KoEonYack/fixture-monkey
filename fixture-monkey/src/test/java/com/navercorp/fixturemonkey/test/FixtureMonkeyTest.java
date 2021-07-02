@@ -1241,6 +1241,24 @@ class FixtureMonkeyTest {
 		then(actual.values.size()).isBetween(14, 15);
 	}
 
+	@Provide
+	Arbitrary<StringWrapperClassWithPredicate> acceptIf() {
+		return this.sut.giveMeBuilder(StringWrapperClassWithPredicate.class)
+			.acceptIf(StringWrapperClassWithPredicate::isEmpty, it -> it.set("value", "test"))
+			.build();
+	}
+
+	@Property
+	void giveMeAcceptIf(
+		@ForAll("acceptIf") StringWrapperClassWithPredicate actual1,
+		@ForAll("acceptIf") StringWrapperClassWithPredicate actual2
+	) {
+		then(actual1.value).satisfiesAnyOf(
+			it -> then(it).isNotEqualTo(actual2),
+			it -> then(it).isEqualTo("test")
+		);
+	}
+
 	@Data
 	public static class IntegerWrapperClass {
 		int value;
@@ -1386,5 +1404,14 @@ class FixtureMonkeyTest {
 	public static class TwoStringClass {
 		private String value1;
 		private String value2;
+	}
+
+	@Data
+	public static class StringWrapperClassWithPredicate {
+		private String value;
+
+		public boolean isEmpty() {
+			return value == null;
+		}
 	}
 }

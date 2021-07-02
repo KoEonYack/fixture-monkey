@@ -1,6 +1,5 @@
 package com.navercorp.fixturemonkey;
 
-import static com.navercorp.fixturemonkey.Constants.DEFAULT_ELEMENT_MAX_SIZE;
 import static java.util.stream.Collectors.toList;
 
 import java.util.ArrayList;
@@ -9,6 +8,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -185,6 +185,29 @@ public final class ArbitraryBuilder<T> {
 
 	public List<T> sampleList(int size) {
 		return this.build().sampleStream().limit(size).collect(toList());
+	}
+
+	public ArbitraryBuilder<T> acceptIf(Predicate<T> predicate, Consumer<ArbitraryBuilder<T>> self) {
+		return new ArbitraryBuilder<>(() -> {
+			T sample = this.sample();
+			if (predicate.test(sample)) {
+				ArbitraryBuilder<T> newArbitraryBuilder = new ArbitraryBuilder<>(
+					sample,
+					this.traverser,
+					this.generator,
+					this.validator,
+					this.arbitraryCustomizers
+				);
+				self.accept(newArbitraryBuilder);
+				return newArbitraryBuilder.sample();
+			}
+			return sample;
+		},
+			this.traverser,
+			this.generator,
+			this.validator,
+			this.arbitraryCustomizers
+		);
 	}
 
 	public ArbitraryBuilder<T> spec(ExpressionSpec expressionSpec) {
