@@ -69,6 +69,11 @@ public class FixtureMonkeyBuilder {
 		return this;
 	}
 
+	public FixtureMonkeyBuilder addExceptGeneratePackage(String exceptGeneratePackage) {
+		this.optionsBuilder.addExceptGeneratePackage(exceptGeneratePackage);
+		return this;
+	}
+
 	public FixtureMonkeyBuilder exceptGeneratePackages(Set<String> exceptGeneratePackages) {
 		this.optionsBuilder.exceptGeneratePackages(exceptGeneratePackages);
 		return this;

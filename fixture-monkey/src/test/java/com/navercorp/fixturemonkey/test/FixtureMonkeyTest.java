@@ -1304,6 +1304,17 @@ class FixtureMonkeyTest {
 		then(actual.values).isNotEmpty();
 	}
 
+	@Property
+	void addExceptGenerate() {
+		FixtureMonkey sut = FixtureMonkey.builder()
+			.addExceptGeneratePackage("com.navercorp.fixturemonkey.test")
+			.build();
+
+		ExceptGenerateClass actual = sut.giveMeOne(ExceptGenerateClass.class);
+
+		then(actual).isNull();
+	}
+
 	@Data
 	public static class IntegerWrapperClass {
 		int value;
@@ -1464,5 +1475,10 @@ class FixtureMonkeyTest {
 	public static class IntegerListClassNotEmpty {
 		@NotEmpty
 		private List<Integer> values;
+	}
+
+	@Data
+	public static class ExceptGenerateClass {
+		String value;
 	}
 }

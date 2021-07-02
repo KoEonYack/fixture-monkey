@@ -197,6 +197,11 @@ public final class ArbitraryOption {
 		private double nullInject = 0.2;
 		private boolean nullableContainer = false;
 
+		public FixtureOptionsBuilder addExceptGeneratePackage(String exceptGeneratePackage) {
+			this.exceptGeneratePackages.add(exceptGeneratePackage);
+			return this;
+		}
+
 		public FixtureOptionsBuilder exceptGeneratePackages(Set<String> exceptGeneratePackages) {
 			this.exceptGeneratePackages = exceptGeneratePackages;
 			return this;
