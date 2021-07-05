@@ -183,11 +183,19 @@ public final class ArbitraryNode<T> {
 
 	public void setContainerMinSize(@Nullable Integer minSize) {
 		FixtureNodeStatus<T> status = this.getStatus();
+		if (status.getContainerSizeConstraint() == null) {
+			status.setContainerSizeConstraint(new ContainerSizeConstraint(minSize, null));
+			return;
+		}
 		status.setContainerSizeConstraint(status.getContainerSizeConstraint().withMinSize(minSize));
 	}
 
 	public void setContainerMaxSize(@Nullable Integer maxSize) {
 		FixtureNodeStatus<T> status = this.getStatus();
+		if (status.getContainerSizeConstraint() == null) {
+			status.setContainerSizeConstraint(new ContainerSizeConstraint(null, maxSize));
+			return;
+		}
 		status.setContainerSizeConstraint(status.getContainerSizeConstraint().withMaxSize(maxSize));
 	}
 

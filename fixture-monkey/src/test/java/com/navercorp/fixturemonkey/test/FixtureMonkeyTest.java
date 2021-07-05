@@ -1342,6 +1342,88 @@ class FixtureMonkeyTest {
 		then(actual.hasMetadata("value")).isTrue();
 	}
 
+	@Provide
+	Arbitrary<IntegerListClass> sizeListSmallerThanValueWhenDecomposed() {
+		List<Integer> values = new ArrayList<>();
+		values.add(1);
+		values.add(2);
+		values.add(3);
+		IntegerListClass value = new IntegerListClass();
+		value.setValues(values);
+		return this.sut.giveMeBuilder(value)
+			.size("values", 1)
+			.build();
+	}
+
+	@Property
+	void giveMeSizeListSmallerThanValueWhenDecomposed(
+		@ForAll("sizeListSmallerThanValueWhenDecomposed") IntegerListClass actual
+	) {
+		then(actual.values).hasSize(1);
+		then(actual.values.get(0)).isEqualTo(1);
+	}
+
+	@Provide
+	Arbitrary<IntegerListClass> sizeListBiggerThanValueWhenDecomposed() {
+		List<Integer> values = new ArrayList<>();
+		values.add(1);
+		values.add(2);
+		values.add(3);
+		IntegerListClass value = new IntegerListClass();
+		value.setValues(values);
+		return this.sut.giveMeBuilder(value)
+			.size("values", 5)
+			.build();
+	}
+
+	@Property
+	void giveMeSizeListBiggerThanValueWhenDecomposed(
+		@ForAll("sizeListBiggerThanValueWhenDecomposed") IntegerListClass actual
+	) {
+		then(actual.values).hasSize(5);
+		then(actual.values.get(0)).isEqualTo(1);
+		then(actual.values.get(1)).isEqualTo(2);
+		then(actual.values.get(2)).isEqualTo(3);
+	}
+
+	@Provide
+	Arbitrary<IntegerArrayClass> sizeArraySmallerThanValueWhenDecomposed() {
+		Integer[] values = new Integer[] {1, 2, 3};
+		IntegerArrayClass value = new IntegerArrayClass();
+		value.setValue(values);
+		return this.sut.giveMeBuilder(value)
+			.size("value", 1)
+			.build();
+	}
+
+	@Property
+	void giveMeSizeArraySmallerThanValueWhenDecomposed(
+		@ForAll("sizeArraySmallerThanValueWhenDecomposed") IntegerArrayClass actual
+	) {
+		then(actual.value).hasSize(1);
+		then(actual.value[0]).isEqualTo(1);
+	}
+
+	@Provide
+	Arbitrary<IntegerArrayClass> sizeArrayBiggerThanValueWhenDecomposed() {
+		Integer[] values = new Integer[] {1, 2, 3};
+		IntegerArrayClass value = new IntegerArrayClass();
+		value.setValue(values);
+		return this.sut.giveMeBuilder(value)
+			.size("value", 5)
+			.build();
+	}
+
+	@Property
+	void giveMeSizeArrayBiggerThanValueWhenDecomposed(
+		@ForAll("sizeArrayBiggerThanValueWhenDecomposed") IntegerArrayClass actual
+	) {
+		then(actual.value).hasSize(5);
+		then(actual.value[0]).isEqualTo(1);
+		then(actual.value[1]).isEqualTo(2);
+		then(actual.value[2]).isEqualTo(3);
+	}
+
 	@Data
 	public static class IntegerWrapperClass {
 		int value;

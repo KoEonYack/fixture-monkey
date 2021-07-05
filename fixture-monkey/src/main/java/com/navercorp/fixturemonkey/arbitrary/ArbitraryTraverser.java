@@ -169,6 +169,9 @@ public final class ArbitraryTraverser {
 
 		T value = currentNode.getValueSupplier().get();
 
+		int currentIndex = 0;
+		int elementSize = Integer.MAX_VALUE;
+
 		if (value != null) {
 			Iterator<U> iterator;
 			if (value instanceof Collection || value instanceof Iterator || value instanceof Stream) {
@@ -179,8 +182,13 @@ public final class ArbitraryTraverser {
 				} else {
 					iterator = (Iterator<U>)value;
 				}
-				int index = 0;
-				while (iterator.hasNext()) {
+
+				ContainerSizeConstraint containerSizeConstraint = currentNode.getContainerSizeConstraint();
+				if (containerSizeConstraint != null) {
+					elementSize = containerSizeConstraint.getArbitraryElementSize();
+				}
+
+				while (currentIndex < elementSize && iterator.hasNext()) {
 					U nextObject = iterator.next();
 					ArbitraryNode<U> nextNode = ArbitraryNode.<U>builder()
 						.type(childType)
@@ -188,13 +196,19 @@ public final class ArbitraryTraverser {
 							() -> nextObject
 						)
 						.fieldName(fieldName)
-						.indexOfIterable(index)
+						.indexOfIterable(currentIndex)
 						.build();
 					currentNode.addChildNode(nextNode);
 					traverse(nextNode, false, fieldNameResolver);
-					index++;
+					currentIndex++;
 				}
-				return;
+
+				if (containerSizeConstraint == null) {
+					currentNode.setContainerSizeConstraint(
+						new ContainerSizeConstraint(currentIndex, currentIndex)
+					);
+					return;
+				}
 			} else {
 				if (clazz.isOptional()) {
 					Optional<U> optional = ((Optional<U>)value);
@@ -214,15 +228,15 @@ public final class ArbitraryTraverser {
 					traverse(nextNode, false, fieldNameResolver);
 					return;
 				}
-
 			}
 		}
 
 		currentNode.initializeElementSize();
+		if (elementSize == Integer.MAX_VALUE) {
+			elementSize = currentNode.getContainerSizeConstraint().getArbitraryElementSize();
+		}
 
-		int elementSize = currentNode.getContainerSizeConstraint().getArbitraryElementSize();
-
-		for (int i = 0; i < elementSize; i++) {
+		for (int i = currentIndex; i < elementSize; i++) {
 			ArbitraryNode<U> genericFrame = ArbitraryNode.<U>builder()
 				.type(childType)
 				.fieldName(fieldName)
@@ -244,27 +258,41 @@ public final class ArbitraryTraverser {
 		ArbitraryType<U> childType = clazz.getArrayFixtureType();
 
 		T value = currentNode.getValueSupplier().get();
+		ContainerSizeConstraint containerSizeConstraint = currentNode.getContainerSizeConstraint();
+		int elementSize = Integer.MAX_VALUE;
+		int currentIndex = 0;
+
 		if (value != null) {
 			int length = Array.getLength(value);
-			for (int i = 0; i < length; i++) {
-				U nextValue = (U)Array.get(value, i);
+
+			if (containerSizeConstraint != null) {
+				elementSize = containerSizeConstraint.getArbitraryElementSize();
+			}
+
+			for (currentIndex = 0; currentIndex < length && currentIndex < elementSize; currentIndex++) {
+				U nextValue = (U)Array.get(value, currentIndex);
 				ArbitraryNode<U> nextNode = ArbitraryNode.<U>builder()
 					.type(childType)
 					.fieldName(fieldName)
-					.indexOfIterable(i)
+					.indexOfIterable(currentIndex)
 					.valueSupplier(() -> nextValue)
 					.build();
 				currentNode.addChildNode(nextNode);
 				traverse(nextNode, false, fieldNameResolver);
 			}
-			return;
+
+			if (containerSizeConstraint == null) {
+				currentNode.setContainerSizeConstraint(new ContainerSizeConstraint(length, length));
+				return;
+			}
 		}
 
 		currentNode.initializeElementSize();
+		if (elementSize == Integer.MAX_VALUE) {
+			elementSize = containerSizeConstraint.getArbitraryElementSize();
+		}
 
-		int elementSize = currentNode.getContainerSizeConstraint().getArbitraryElementSize();
-
-		for (int i = 0; i < elementSize; i++) {
+		for (int i = currentIndex; i < elementSize; i++) {
 			ArbitraryNode<U> genericFrame = ArbitraryNode.<U>builder()
 				.type(childType)
 				.fieldName(fieldName)
