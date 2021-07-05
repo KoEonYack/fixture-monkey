@@ -281,6 +281,10 @@ public final class ArbitraryNode<T> {
 		return getStatus().isFixed();
 	}
 
+	public boolean isLeafNode() {
+		return this.getChildren().isEmpty() && this.getArbitrary() != null;
+	}
+
 	public Supplier<T> getValueSupplier() {
 		return valueSupplier;
 	}
@@ -307,35 +311,10 @@ public final class ArbitraryNode<T> {
 			.build();
 	}
 
-	<U> void update(ArbitraryNode<U> entryNode, ArbitraryGenerator generator) {
-		if (!entryNode.isLeafNode() && !entryNode.isFixed()) {
-			for (ArbitraryNode<?> nextChild : entryNode.getChildren()) {
-				update(nextChild, generator);
-			}
-
-			entryNode.setArbitrary(
-				generator.generate(entryNode.type, entryNode.children)
-			);
-
-		}
-
-		entryNode.getPostArbitraryManipulators().forEach(
-			operation -> entryNode.setArbitrary(operation.apply(entryNode.getArbitrary()))
-		);
-
-		if (entryNode.isNullable() && !entryNode.isManipulated()) {
-			entryNode.setArbitrary(entryNode.getArbitrary().injectNull(entryNode.getNullInject()));
-		}
-	}
-
 	private boolean matchExpression(Cursor cursor) {
 		boolean sameName = cursor.nameEquals(this.getFieldName());
 		boolean sameIndex = cursor.indexEquals(indexOfIterable);
 		return sameName && sameIndex;
-	}
-
-	private boolean isLeafNode() {
-		return this.getChildren().isEmpty() && this.getArbitrary() != null;
 	}
 
 	private FixtureNodeStatus<T> getStatus() {
