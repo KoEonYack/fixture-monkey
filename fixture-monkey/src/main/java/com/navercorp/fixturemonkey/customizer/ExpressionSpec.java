@@ -221,13 +221,15 @@ public final class ExpressionSpec {
 
 		if (overwrite) {
 			this.builderManipulators.removeIf(
-				it -> it instanceof ArbitraryFilter
-					&& fixtureSpec.hasFilter(((ArbitraryFilter<?>)it).getArbitraryExpression().toString())
+				it -> it instanceof PostArbitraryManipulator
+					&& fixtureSpec.hasPostArbitraryManipulators(
+					((PostArbitraryManipulator<?>)it).getArbitraryExpression().toString()
+				)
 			); // remove redundant fixtureExpression
 			this.builderManipulators.addAll(postArbitraryManipulators);
 		} else {
 			List<PostArbitraryManipulator> filteredPostArbitraryManipulators = postArbitraryManipulators.stream()
-				.filter(it -> !this.hasFilter(it.getArbitraryExpression().toString()))
+				.filter(it -> !this.hasPostArbitraryManipulators(it.getArbitraryExpression().toString()))
 				.collect(toList());
 			this.builderManipulators.addAll(filteredPostArbitraryManipulators);
 		}
@@ -265,6 +267,13 @@ public final class ExpressionSpec {
 		return this.builderManipulators.stream()
 			.filter(it -> !(it instanceof PostArbitraryManipulator) && !(it instanceof MetadataManipulator))
 			.map(ArbitraryExpressionManipulator.class::cast)
+			.anyMatch(it -> it.getArbitraryExpression().equals(ArbitraryExpression.from(expression)));
+	}
+
+	public boolean hasPostArbitraryManipulators(String expression) {
+		return this.builderManipulators.stream()
+			.filter(PostArbitraryManipulator.class::isInstance)
+			.map(PostArbitraryManipulator.class::cast)
 			.anyMatch(it -> it.getArbitraryExpression().equals(ArbitraryExpression.from(expression)));
 	}
 
