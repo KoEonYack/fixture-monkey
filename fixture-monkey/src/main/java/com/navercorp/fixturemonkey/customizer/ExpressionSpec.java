@@ -18,6 +18,7 @@ import net.jqwik.api.Arbitrary;
 import com.navercorp.fixturemonkey.arbitrary.AbstractArbitraryExpressionManipulator;
 import com.navercorp.fixturemonkey.arbitrary.AbstractArbitrarySet;
 import com.navercorp.fixturemonkey.arbitrary.ArbitraryExpression;
+import com.navercorp.fixturemonkey.arbitrary.ArbitraryExpressionManipulator;
 import com.navercorp.fixturemonkey.arbitrary.ArbitraryFilter;
 import com.navercorp.fixturemonkey.arbitrary.ArbitraryNullity;
 import com.navercorp.fixturemonkey.arbitrary.ArbitrarySet;
@@ -204,13 +205,14 @@ public final class ExpressionSpec {
 
 	@SuppressWarnings("rawtypes")
 	public ExpressionSpec merge(ExpressionSpec fixtureSpec, boolean overwrite) {
-		List<PreArbitraryManipulator> filteredPreArbitraryManipulators = fixtureSpec.builderManipulators.stream()
-			.filter(AbstractArbitrarySet.class::isInstance)
-			.map(AbstractArbitrarySet.class::cast)
-			.filter(it -> overwrite || !this.hasSet(it.getArbitraryExpression().toString()))
+		List<BuilderManipulator> filteredOrderedArbitraryManipulators = fixtureSpec.builderManipulators.stream()
+			.filter(it -> !(it instanceof PostArbitraryManipulator) && !(it instanceof MetadataManipulator))
+			.map(ArbitraryExpressionManipulator.class::cast)
+			.filter(it -> overwrite || !hasOrderedManipulators(it.getArbitraryExpression().toString()))
+			.map(BuilderManipulator.class::cast)
 			.collect(toList());
 
-		this.builderManipulators.addAll(filteredPreArbitraryManipulators);
+		this.builderManipulators.addAll(filteredOrderedArbitraryManipulators);
 
 		List<PostArbitraryManipulator> postArbitraryManipulators = fixtureSpec.builderManipulators.stream()
 			.filter(PostArbitraryManipulator.class::isInstance)
@@ -257,6 +259,13 @@ public final class ExpressionSpec {
 			)
 		);
 		return this;
+	}
+
+	public boolean hasOrderedManipulators(String expression) {
+		return this.builderManipulators.stream()
+			.filter(it -> !(it instanceof PostArbitraryManipulator) && !(it instanceof MetadataManipulator))
+			.map(ArbitraryExpressionManipulator.class::cast)
+			.anyMatch(it -> it.getArbitraryExpression().equals(ArbitraryExpression.from(expression)));
 	}
 
 	public boolean hasSet(String expression) {

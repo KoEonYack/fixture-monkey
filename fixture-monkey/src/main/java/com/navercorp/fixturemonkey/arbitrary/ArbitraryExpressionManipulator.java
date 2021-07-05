@@ -1,6 +1,6 @@
 package com.navercorp.fixturemonkey.arbitrary;
 
-interface ArbitraryExpressionManipulator {
+public interface ArbitraryExpressionManipulator {
 	ArbitraryExpression getArbitraryExpression();
 
 	void addPrefix(String expression);

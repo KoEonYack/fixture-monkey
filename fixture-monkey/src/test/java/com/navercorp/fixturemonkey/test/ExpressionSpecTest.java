@@ -82,6 +82,30 @@ public class ExpressionSpecTest {
 	}
 
 	@Property
+	void mergeNull() {
+		ExpressionSpec merger = new ExpressionSpec()
+			.setNull("test");
+		ExpressionSpec merged = new ExpressionSpec()
+			.setNull("test");
+
+		ExpressionSpec actual = merger.merge(merged);
+
+		then(actual.getBuilderManipulators()).hasSize(2);
+	}
+
+	@Property
+	void mergeNullNotOverwrite() {
+		ExpressionSpec merger = new ExpressionSpec()
+			.setNull("test");
+		ExpressionSpec merged = new ExpressionSpec()
+			.setNull("test");
+
+		ExpressionSpec actual = merger.merge(merged, false);
+
+		then(actual.getBuilderManipulators()).hasSize(1);
+	}
+
+	@Property
 	void exclude() {
 		ExpressionSpec actual = new ExpressionSpec()
 			.set("test", "test")
