@@ -168,7 +168,9 @@ public final class ArbitraryNode<T> {
 	}
 
 	public void setArbitrary(Arbitrary<T> arbitrary) {
-		this.getStatus().setArbitrary(arbitrary);
+		this.getStatus().setArbitrary(arbitrary.withoutEdgeCases());
+		// since 1.4.0, OOM happens when sampling complex object, disabling until it is fixed
+		// https://github.com/jlink/jqwik/issues/200
 	}
 
 	public void setManipulated(boolean manipulated) {
