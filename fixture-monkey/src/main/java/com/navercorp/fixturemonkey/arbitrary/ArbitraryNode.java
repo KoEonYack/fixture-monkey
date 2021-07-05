@@ -143,8 +143,8 @@ public final class ArbitraryNode<T> {
 			Class<?> clazz = this.getType().getType();
 			Class<?> toValueClazz = toValue.getClass();
 			if (
-				!TypeSupports.isSameType(clazz, toValueClazz)
-					&& !toValueClazz.isAssignableFrom(clazz)
+				!TypeSupports.isCompatibleType(clazz, toValueClazz)
+					&& !clazz.isAssignableFrom(toValueClazz)
 					&& !Arbitrary.class.isAssignableFrom(toValueClazz)
 			) {
 				log.warn("field \"{}\" type is \"{}\", but given set value is \"{}\".",

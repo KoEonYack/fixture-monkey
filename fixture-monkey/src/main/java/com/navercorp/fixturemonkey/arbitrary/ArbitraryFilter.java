@@ -41,7 +41,7 @@ public final class ArbitraryFilter<T> extends AbstractArbitraryExpressionManipul
 	@Override
 	public boolean isMappableTo(ArbitraryNode<T> arbitraryNode) {
 		Class<?> nodeClazz = arbitraryNode.getType().getType();
-		return TypeSupports.isSameType(this.clazz, nodeClazz)
+		return TypeSupports.isCompatibleType(this.clazz, nodeClazz)
 			|| this.clazz.isAssignableFrom(nodeClazz);
 	}
 
