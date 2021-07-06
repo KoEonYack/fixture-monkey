@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.function.Supplier;
 
@@ -40,16 +41,23 @@ public final class ArbitraryTree<T> {
 		return selectNodes;
 	}
 
-	public void update(ArbitraryGenerator generator) {
-		update(getHead(), generator);
+	public void update(ArbitraryGenerator defaultGenerator, Map<Class<?>, ArbitraryGenerator> generatorMap) {
+		update(getHead(), defaultGenerator, generatorMap);
 	}
 
-	<U> void update(ArbitraryNode<U> entryNode, ArbitraryGenerator generator) {
+	<U> void update(
+		ArbitraryNode<U> entryNode,
+		ArbitraryGenerator defaultGenerator,
+		Map<Class<?>, ArbitraryGenerator> generatorMap
+	) {
+
 		if (!entryNode.isLeafNode() && !entryNode.isFixed()) {
 			for (ArbitraryNode<?> nextChild : entryNode.getChildren()) {
-				update(nextChild, generator);
+				update(nextChild, defaultGenerator, generatorMap);
 			}
 
+			Class<?> clazz = entryNode.getType().getType();
+			ArbitraryGenerator generator = getGenerator(clazz, defaultGenerator, generatorMap);
 			entryNode.setArbitrary(
 				generator.generate(entryNode.getType(), entryNode.getChildren())
 			);
@@ -70,6 +78,14 @@ public final class ArbitraryTree<T> {
 			head = headSupplier.get();
 		}
 		return head;
+	}
+
+	public ArbitraryGenerator getGenerator(
+		Class<?> clazz,
+		ArbitraryGenerator defaultGenerator,
+		Map<Class<?>, ArbitraryGenerator> generatorMap
+	) {
+		return generatorMap.getOrDefault(clazz, defaultGenerator);
 	}
 
 	@SuppressWarnings({"rawtypes", "unchecked"})

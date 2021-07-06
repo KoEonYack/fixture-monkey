@@ -76,7 +76,14 @@ public class FixtureMonkey {
 	}
 
 	public <T> ArbitraryBuilder<T> giveMeBuilder(Class<T> clazz, ArbitraryOption options) {
-		return new ArbitraryBuilder<>(clazz, options, getGenerator(clazz), validator, new ArbitraryCustomizers());
+		return new ArbitraryBuilder<>(
+			clazz,
+			options,
+			getGenerator(clazz),
+			validator,
+			new ArbitraryCustomizers(),
+			this.generatorMap
+		);
 	}
 
 	public <T> ArbitraryBuilder<T> giveMeBuilder(T value) {
@@ -85,7 +92,8 @@ public class FixtureMonkey {
 			new ArbitraryTraverser(options),
 			getGenerator(value.getClass()),
 			validator,
-			this.arbitraryCustomizers
+			this.arbitraryCustomizers,
+			this.generatorMap
 		);
 	}
 
@@ -101,7 +109,8 @@ public class FixtureMonkey {
 			options,
 			this.getGenerator(clazz, newArbitraryCustomizers),
 			this.validator,
-			newArbitraryCustomizers
+			newArbitraryCustomizers,
+			this.generatorMap
 		);
 	}
 

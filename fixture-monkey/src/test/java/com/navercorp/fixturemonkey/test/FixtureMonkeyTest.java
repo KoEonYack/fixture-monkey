@@ -1424,6 +1424,29 @@ class FixtureMonkeyTest {
 		then(actual.value[2]).isEqualTo(3);
 	}
 
+	@Property
+	void generatorMapBeanGeneratorWithBuilderGenerator() {
+		FixtureMonkey sut = FixtureMonkey.builder()
+			.putGenerator(BuilderIntegerClass.class, BuilderArbitraryGenerator.INSTANCE)
+			.build();
+
+		BeanInnerBuilderClass actual = sut.giveMeOne(BeanInnerBuilderClass.class);
+
+		then(actual).isNotNull();
+	}
+
+	@Property
+	void generatorMapFieldReflectionGeneratorWithBuilderGenerator() {
+		FixtureMonkey sut = FixtureMonkey.builder()
+			.defaultGenerator(FieldReflectionArbitraryGenerator.INSTANCE)
+			.putGenerator(BuilderIntegerClass.class, BuilderArbitraryGenerator.INSTANCE)
+			.build();
+
+		FieldReflectionInnerBuilderClass actual = sut.giveMeOne(FieldReflectionInnerBuilderClass.class);
+
+		then(actual).isNotNull();
+	}
+
 	@Data
 	public static class IntegerWrapperClass {
 		int value;
@@ -1589,5 +1612,14 @@ class FixtureMonkeyTest {
 	@Data
 	public static class ExceptGenerateClass {
 		String value;
+	}
+
+	@Data
+	public static class BeanInnerBuilderClass {
+		BuilderIntegerClass value;
+	}
+
+	public static class FieldReflectionInnerBuilderClass {
+		BuilderIntegerClass value;
 	}
 }

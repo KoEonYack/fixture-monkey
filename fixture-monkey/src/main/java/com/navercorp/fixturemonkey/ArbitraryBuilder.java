@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -47,6 +48,7 @@ public final class ArbitraryBuilder<T> {
 	@SuppressWarnings("rawtypes")
 	private final ArbitraryValidator validator;
 	private final ArbitraryCustomizers arbitraryCustomizers;
+	private final Map<Class<?>, ArbitraryGenerator> generatorMap;
 
 	private ArbitraryGenerator generator;
 	private boolean validOnly = true;
@@ -57,7 +59,8 @@ public final class ArbitraryBuilder<T> {
 		ArbitraryOption options,
 		ArbitraryGenerator generator,
 		ArbitraryValidator validator,
-		ArbitraryCustomizers arbitraryCustomizers
+		ArbitraryCustomizers arbitraryCustomizers,
+		Map<Class<?>, ArbitraryGenerator> generatorMap
 	) {
 		this(ArbitraryNode.builder()
 				.type(new ArbitraryType(clazz))
@@ -66,7 +69,8 @@ public final class ArbitraryBuilder<T> {
 			new ArbitraryTraverser(options),
 			generator,
 			validator,
-			arbitraryCustomizers
+			arbitraryCustomizers,
+			generatorMap
 		);
 	}
 
@@ -76,7 +80,8 @@ public final class ArbitraryBuilder<T> {
 		ArbitraryTraverser fixtureTraverser,
 		ArbitraryGenerator generator,
 		ArbitraryValidator validator,
-		ArbitraryCustomizers arbitraryCustomizers
+		ArbitraryCustomizers arbitraryCustomizers,
+		Map<Class<?>, ArbitraryGenerator> generatorMap
 	) {
 		this.tree = new ArbitraryTree<>(
 			() -> ArbitraryNode.builder()
@@ -89,6 +94,7 @@ public final class ArbitraryBuilder<T> {
 		this.traverser = fixtureTraverser;
 		this.validator = validator;
 		this.arbitraryCustomizers = arbitraryCustomizers;
+		this.generatorMap = generatorMap;
 	}
 
 	@SuppressWarnings({"rawtypes"})
@@ -97,7 +103,8 @@ public final class ArbitraryBuilder<T> {
 		ArbitraryTraverser fixtureTraverser,
 		ArbitraryGenerator generator,
 		ArbitraryValidator validator,
-		ArbitraryCustomizers arbitraryCustomizers
+		ArbitraryCustomizers arbitraryCustomizers,
+		Map<Class<?>, ArbitraryGenerator> generatorMap
 	) {
 		this.tree = new ArbitraryTree<>(() ->
 			ArbitraryNode.<T>builder()
@@ -109,6 +116,7 @@ public final class ArbitraryBuilder<T> {
 		this.traverser = fixtureTraverser;
 		this.validator = validator;
 		this.arbitraryCustomizers = arbitraryCustomizers;
+		this.generatorMap = generatorMap;
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -118,7 +126,8 @@ public final class ArbitraryBuilder<T> {
 		ArbitraryGenerator generator,
 		ArbitraryValidator validator,
 		ArbitraryCustomizers arbitraryCustomizers,
-		List<BuilderManipulator> builderManipulators
+		List<BuilderManipulator> builderManipulators,
+		Map<Class<?>, ArbitraryGenerator> generatorMap
 	) {
 		this.tree = tree;
 		this.traverser = traverser;
@@ -126,6 +135,7 @@ public final class ArbitraryBuilder<T> {
 		this.validator = validator;
 		this.arbitraryCustomizers = arbitraryCustomizers;
 		this.builderManipulators.addAll(builderManipulators);
+		this.generatorMap = generatorMap;
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -134,14 +144,15 @@ public final class ArbitraryBuilder<T> {
 		ArbitraryTraverser traverser,
 		ArbitraryGenerator generator,
 		ArbitraryValidator validator,
-		ArbitraryCustomizers arbitraryCustomizers
+		ArbitraryCustomizers arbitraryCustomizers,
+		Map<Class<?>, ArbitraryGenerator> generatorMap
 	) {
 		this.traverser = traverser;
 		this.tree = new ArbitraryTree<>(() -> node);
 		this.generator = generator;
 		this.validator = validator;
 		this.arbitraryCustomizers = arbitraryCustomizers;
-
+		this.generatorMap = generatorMap;
 	}
 
 	public ArbitraryBuilder<T> validOnly(boolean validOnly) {
@@ -167,7 +178,7 @@ public final class ArbitraryBuilder<T> {
 				buildArbitraryBuilder.generator
 			);
 			buildArbitraryBuilder.apply(buildArbitraryBuilder.builderManipulators);
-			buildTree.update(buildArbitraryBuilder.generator);
+			buildTree.update(buildArbitraryBuilder.generator, generatorMap);
 			return buildTree.getHead().getArbitrary();
 		}, this.validator, this.validOnly);
 	}
@@ -189,7 +200,8 @@ public final class ArbitraryBuilder<T> {
 					this.traverser,
 					this.generator,
 					this.validator,
-					this.arbitraryCustomizers
+					this.arbitraryCustomizers,
+					this.generatorMap
 				);
 				self.accept(newArbitraryBuilder);
 				return newArbitraryBuilder.sample();
@@ -199,7 +211,8 @@ public final class ArbitraryBuilder<T> {
 			this.traverser,
 			this.generator,
 			this.validator,
-			this.arbitraryCustomizers
+			this.arbitraryCustomizers,
+			this.generatorMap
 		);
 	}
 
@@ -384,7 +397,8 @@ public final class ArbitraryBuilder<T> {
 			this.traverser,
 			this.generator,
 			this.validator,
-			this.arbitraryCustomizers
+			this.arbitraryCustomizers,
+			this.generatorMap
 		);
 	}
 
@@ -406,7 +420,8 @@ public final class ArbitraryBuilder<T> {
 			this.traverser,
 			this.generator,
 			this.validator,
-			this.arbitraryCustomizers
+			this.arbitraryCustomizers,
+			this.generatorMap
 		);
 	}
 
@@ -417,7 +432,8 @@ public final class ArbitraryBuilder<T> {
 			this.generator,
 			this.validator,
 			this.arbitraryCustomizers,
-			this.builderManipulators.stream().map(BuilderManipulator::copy).collect(toList())
+			this.builderManipulators.stream().map(BuilderManipulator::copy).collect(toList()),
+			this.generatorMap
 		);
 	}
 
