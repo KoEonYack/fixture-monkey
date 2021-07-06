@@ -5,7 +5,6 @@ import static org.assertj.core.api.BDDAssertions.then;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Predicate;
 
 import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
@@ -191,46 +190,48 @@ class FixtureMonkeyJacksonArbitraryGeneratorTest {
 	}
 
 	@Provide
-	Arbitrary<IntegerWrapperClass> specFilter() {
+	Arbitrary<IntegerWrapperClass> specPostCondition() {
 		return this.sut.giveMeBuilder(IntegerWrapperClass.class)
-			.spec(new ExpressionSpec().<Integer>filter(
+			.spec(new ExpressionSpec().setPostCondition(
 				"value",
+				Integer.class,
 				value -> value >= 0 && value <= 100
 			))
 			.build();
 	}
 
 	@Property
-	void giveMeSpecFilter(@ForAll("specFilter") IntegerWrapperClass actual) {
+	void giveMeSpecPostCondition(@ForAll("specPostCondition") IntegerWrapperClass actual) {
 		then(actual.getInteger()).isBetween(0, 100);
 	}
 
 	@Provide
-	Arbitrary<IntegerWrapperClass> specFilterType() {
+	Arbitrary<IntegerWrapperClass> specPostConditionType() {
 		return this.sut.giveMeBuilder(IntegerWrapperClass.class)
-			.spec(new ExpressionSpec().filterInteger(
+			.spec(new ExpressionSpec().setPostCondition(
 				"value",
+				Integer.class,
 				value -> value >= 0 && value <= 100
 			))
 			.build();
 	}
 
 	@Property
-	void giveMeSpecFilterType(@ForAll("specFilterType") IntegerWrapperClass actual) {
+	void giveMeSpecPostConditionType(@ForAll("specPostConditionType") IntegerWrapperClass actual) {
 		then(actual.getInteger()).isBetween(0, 100);
 	}
 
 	@Provide
-	Arbitrary<IntegerListClass> filterIndex() {
+	Arbitrary<IntegerListClass> postConditionIndex() {
 		return this.sut.giveMeBuilder(IntegerListClass.class)
 			.spec(new ExpressionSpec()
-				.filterInteger("values[0]", value -> value >= 0 && value <= 100)
+				.setPostCondition("values[0]", Integer.class, value -> value >= 0 && value <= 100)
 				.size("values", 1, 1))
 			.build();
 	}
 
 	@Property
-	void giveMeFilterIndex(@ForAll("filterIndex") IntegerListClass actual) {
+	void giveMePostConditionIndex(@ForAll("postConditionIndex") IntegerListClass actual) {
 		then(actual.getList()).hasSize(1);
 		then(actual.getList().get(0)).isBetween(0, 100);
 	}
@@ -362,29 +363,30 @@ class FixtureMonkeyJacksonArbitraryGeneratorTest {
 	}
 
 	@Provide
-	Arbitrary<StringListClass> filterLimitIndex() {
+	Arbitrary<StringListClass> postConditionLimitIndex() {
 		return this.sut.giveMeBuilder(StringListClass.class)
 			.size("values", 2, 2)
-			.filter("values[*]", String.class, it -> it.length() > 0)
-			.filter("values[*]", String.class, it -> it.length() > 5, 1)
+			.setPostCondition("values[*]", String.class, it -> it.length() > 0)
+			.setPostCondition("values[*]", String.class, it -> it.length() > 5, 1)
 			.build();
 	}
 
 	@Property
-	void giveMeFilterLimitIndex(@ForAll("filterLimitIndex") StringListClass actual) {
+	void giveMePostConditionLimitIndex(@ForAll("postConditionLimitIndex") StringListClass actual) {
 		then(actual.getStringList()).anyMatch(it -> it.length() > 5);
 	}
 
 	@Provide
-	Arbitrary<StringListClass> filterLimitIndexZero() {
+	Arbitrary<StringListClass> postConditionLimitIndexZero() {
 		return this.sut.giveMeBuilder(StringListClass.class)
-			.filter("values[*]", String.class, it -> it.length() > 5)
-			.filter("values[*]", String.class, it -> it.length() == 0, 0)
+			.setPostCondition("values[*]", String.class, it -> it.length() > 5)
+			.setPostCondition("values[*]", String.class, it -> it.length() == 0, 0)
 			.build();
 	}
 
 	@Property
-	void giveMeFilterLimitIndexZeroReturnsNotFilter(@ForAll("filterLimitIndexZero") StringListClass actual) {
+	void giveMePostConditionLimitIndexZeroReturnsNotPostCondition(
+		@ForAll("postConditionLimitIndexZero") StringListClass actual) {
 		then(actual.getStringList()).allMatch(it -> it.length() > 5);
 	}
 
@@ -447,63 +449,34 @@ class FixtureMonkeyJacksonArbitraryGeneratorTest {
 	}
 
 	@Provide
-	Arbitrary<IntegerListClass> specListFilterElement() {
+	Arbitrary<IntegerListClass> specListPostConditionElement() {
 		return this.sut.giveMeBuilder(IntegerListClass.class)
 			.spec(new ExpressionSpec().list("values", it -> {
 				it.ofSize(1);
-				it.<Integer>filterElement(0, filtered -> filtered > 1);
+				it.setElementPostCondition(0, Integer.class, postConditioned -> postConditioned > 1);
 			}))
 			.build();
 	}
 
 	@Property
-	void giveMeSpecListFilterElement(@ForAll("specListFilterElement") IntegerListClass actual) {
+	void giveMeSpecListPostConditionElement(@ForAll("specListPostConditionElement") IntegerListClass actual) {
 		then(actual.getList()).hasSize(1);
 		then(actual.getList().get(0)).isGreaterThan(1);
 	}
 
 	@Provide
-	Arbitrary<IntegerListClass> specListAnyFilter() {
-		return this.sut.giveMeBuilder(IntegerListClass.class)
-			.spec(new ExpressionSpec().list("values", it -> {
-				it.ofSize(3);
-				it.<Integer>any(filtered -> filtered > 1);
-			}))
-			.build();
-	}
-
-	@Property
-	void giveMeSpecListAnyFilter(@ForAll("specListAnyFilter") IntegerListClass actual) {
-		then(actual.getList()).anyMatch(it -> it > 1);
-	}
-
-	@Provide
-	Arbitrary<IntegerListClass> specListAllFilter() {
-		return this.sut.giveMeBuilder(IntegerListClass.class)
-			.spec(new ExpressionSpec().list("values", it -> {
-				it.ofSize(3);
-				it.<Integer>all(filtered -> filtered > 1);
-			}))
-			.build();
-	}
-
-	@Property
-	void giveMeSpecListAllFilter(@ForAll("specListAllFilter") IntegerListClass actual) {
-		then(actual.getList()).allMatch(it -> it > 1);
-	}
-
-	@Provide
-	Arbitrary<NestedStringList> specListFilterElementField() {
+	Arbitrary<NestedStringList> specListPostConditionElementField() {
 		return this.sut.giveMeBuilder(NestedStringList.class)
 			.spec(new ExpressionSpec().list("values", it -> {
 				it.ofSize(1);
-				it.<String>filterElementField(0, "value", filtered -> filtered.length() > 5);
+				it.setElementFieldPostCondition(0, "value", String.class,
+					postConditioned -> postConditioned.length() > 5);
 			}))
 			.build();
 	}
 
 	@Property
-	void giveMeSpecListFilterElementField(@ForAll("specListFilterElementField") NestedStringList actual) {
+	void giveMeSpecListPostConditionElementField(@ForAll("specListPostConditionElementField") NestedStringList actual) {
 		then(actual.getStringList()).allMatch(it -> it.getStr().length() > 5);
 	}
 
@@ -528,20 +501,20 @@ class FixtureMonkeyJacksonArbitraryGeneratorTest {
 	}
 
 	@Provide
-	Arbitrary<ListListString> specListListElementFilter() {
+	Arbitrary<ListListString> specListListElementPostCondition() {
 		return this.sut.giveMeBuilder(ListListString.class)
 			.spec(new ExpressionSpec().list("values", it -> {
 				it.ofSize(1);
 				it.listElement(0, nestedIt -> {
 					nestedIt.ofSize(1);
-					nestedIt.<String>filterElement(0, filtered -> filtered.length() > 5);
+					nestedIt.setElementPostCondition(0, String.class, postConditioned -> postConditioned.length() > 5);
 				});
 			}))
 			.build();
 	}
 
 	@Property
-	void giveMeSpecListListElementFilter(@ForAll("specListListElementFilter") ListListString actual) {
+	void giveMeSpecListListElementPostCondition(@ForAll("specListListElementPostCondition") ListListString actual) {
 		then(actual.getStringListList()).hasSize(1);
 		then(actual.getStringListList().get(0)).hasSize(1);
 		then(actual.getStringListList().get(0).get(0).length()).isGreaterThan(5);
@@ -596,19 +569,19 @@ class FixtureMonkeyJacksonArbitraryGeneratorTest {
 	}
 
 	@Provide
-	Arbitrary<StringListClass> filterRightOrder() {
+	Arbitrary<StringListClass> postConditionRightOrder() {
 		return this.sut.giveMeBuilder(StringListClass.class)
 			.spec(new ExpressionSpec()
 				.list("values",
 					(it) -> it.ofSize(2)
-						.filterElement(0, (Predicate<String>)s -> s.length() > 5)
-						.filterElement(1, (Predicate<String>)s -> s.length() > 10)
+						.setElementPostCondition(0, String.class, s -> s.length() > 5)
+						.setElementPostCondition(1, String.class, s -> s.length() > 10)
 				))
 			.build();
 	}
 
 	@Property
-	void giveMeFilterRightOrder(@ForAll("filterRightOrder") StringListClass actual) {
+	void giveMePostConditionRightOrder(@ForAll("postConditionRightOrder") StringListClass actual) {
 		List<String> values = actual.getStringList();
 		then(values.size()).isEqualTo(2);
 		then(values.get(0).length()).isGreaterThan(5);

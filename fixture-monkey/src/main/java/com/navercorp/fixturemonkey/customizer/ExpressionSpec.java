@@ -5,10 +5,8 @@ import static java.util.stream.Collectors.toList;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -21,10 +19,10 @@ import com.navercorp.fixturemonkey.arbitrary.AbstractArbitraryExpressionManipula
 import com.navercorp.fixturemonkey.arbitrary.AbstractArbitrarySet;
 import com.navercorp.fixturemonkey.arbitrary.ArbitraryExpression;
 import com.navercorp.fixturemonkey.arbitrary.ArbitraryExpressionManipulator;
-import com.navercorp.fixturemonkey.arbitrary.ArbitraryFilter;
 import com.navercorp.fixturemonkey.arbitrary.ArbitraryNullity;
 import com.navercorp.fixturemonkey.arbitrary.ArbitrarySet;
 import com.navercorp.fixturemonkey.arbitrary.ArbitrarySetArbitrary;
+import com.navercorp.fixturemonkey.arbitrary.ArbitrarySetPostCondition;
 import com.navercorp.fixturemonkey.arbitrary.ArbitrarySetPrefix;
 import com.navercorp.fixturemonkey.arbitrary.ArbitrarySetSuffix;
 import com.navercorp.fixturemonkey.arbitrary.BuilderManipulator;
@@ -142,63 +140,15 @@ public final class ExpressionSpec {
 		return this;
 	}
 
-	public <T> ExpressionSpec filter(String name, Predicate<T> predicate, long count) {
-		filterSpec(Object.class, name, predicate, count);
+	public <T> ExpressionSpec setPostCondition(String expression, Class<T> clazz, Predicate<T> predicate, long count) {
+		ArbitraryExpression fixtureExpression = ArbitraryExpression.from(expression);
+		builderManipulators.add(new ArbitrarySetPostCondition<>(clazz, fixtureExpression, predicate, count));
 		return this;
 	}
 
-	public <T> ExpressionSpec filter(String name, Predicate<T> predicate) {
-		filterSpec(Object.class, name, predicate);
-		return this;
-	}
-
-	public ExpressionSpec filterByte(String name, Predicate<Byte> bytePredicate) {
-		filterSpec(Byte.class, name, bytePredicate);
-		return this;
-	}
-
-	public ExpressionSpec filterInteger(String name, Predicate<Integer> integerPredicate) {
-		filterSpec(Integer.class, name, integerPredicate);
-		return this;
-	}
-
-	public ExpressionSpec filterLong(String name, Predicate<Long> longPredicate) {
-		filterSpec(Long.class, name, longPredicate);
-		return this;
-	}
-
-	public ExpressionSpec filterFloat(String name, Predicate<Float> floatPredicate) {
-		filterSpec(Float.class, name, floatPredicate);
-		return this;
-	}
-
-	public ExpressionSpec filterDouble(String name, Predicate<Double> doublePredicate) {
-		filterSpec(Double.class, name, doublePredicate);
-		return this;
-	}
-
-	public ExpressionSpec filterCharacter(String name, Predicate<Character> characterPredicate) {
-		filterSpec(Character.class, name, characterPredicate);
-		return this;
-	}
-
-	public ExpressionSpec filterString(String name, Predicate<String> stringPredicate) {
-		filterSpec(String.class, name, stringPredicate);
-		return this;
-	}
-
-	public <T> ExpressionSpec filterList(String name, Predicate<List<T>> predicate) {
-		filterSpec(List.class, name, predicate);
-		return this;
-	}
-
-	public <T> ExpressionSpec filterSet(String name, Predicate<Set<T>> predicate) {
-		filterSpec(Set.class, name, predicate);
-		return this;
-	}
-
-	public <K, V> ExpressionSpec filterMap(String name, Predicate<Map<K, V>> predicate) {
-		filterSpec(Map.class, name, predicate);
+	public <T> ExpressionSpec setPostCondition(String expression, Class<T> clazz, Predicate<T> predicate) {
+		ArbitraryExpression fixtureExpression = ArbitraryExpression.from(expression);
+		builderManipulators.add(new ArbitrarySetPostCondition<>(clazz, fixtureExpression, predicate));
 		return this;
 	}
 
@@ -298,10 +248,10 @@ public final class ExpressionSpec {
 			.anyMatch(it -> it.getArbitraryExpression().equals(ArbitraryExpression.from(expression)));
 	}
 
-	public boolean hasFilter(String expression) {
+	public boolean hasPostCondition(String expression) {
 		return this.builderManipulators.stream()
-			.filter(ArbitraryFilter.class::isInstance)
-			.map(ArbitraryFilter.class::cast)
+			.filter(ArbitrarySetPostCondition.class::isInstance)
+			.map(ArbitrarySetPostCondition.class::cast)
 			.anyMatch(it -> it.getArbitraryExpression().equals(ArbitraryExpression.from(expression)));
 	}
 
@@ -319,18 +269,6 @@ public final class ExpressionSpec {
 			.filter(it -> it.getArbitraryExpression().equals(ArbitraryExpression.from(expression)))
 			.map(AbstractArbitrarySet::getValue)
 			.findAny();
-	}
-
-	@SuppressWarnings({"unchecked", "rawtypes"})
-	private <T> void filterSpec(Class<T> clazz, String expression, Predicate predicate, long count) {
-		ArbitraryExpression fixtureExpression = ArbitraryExpression.from(expression);
-		builderManipulators.add(new ArbitraryFilter<T>(clazz, fixtureExpression, predicate, count));
-	}
-
-	@SuppressWarnings({"rawtypes", "unchecked"})
-	private <T> void filterSpec(Class<T> clazz, String expression, Predicate predicate) {
-		ArbitraryExpression fixtureExpression = ArbitraryExpression.from(expression);
-		builderManipulators.add(new ArbitraryFilter<T>(clazz, fixtureExpression, predicate));
 	}
 
 	public List<BuilderManipulator> getBuilderManipulators() {

@@ -21,11 +21,11 @@ import net.jqwik.api.Arbitrary;
 
 import com.navercorp.fixturemonkey.arbitrary.AbstractArbitrarySet;
 import com.navercorp.fixturemonkey.arbitrary.ArbitraryExpression;
-import com.navercorp.fixturemonkey.arbitrary.ArbitraryFilter;
 import com.navercorp.fixturemonkey.arbitrary.ArbitraryNode;
 import com.navercorp.fixturemonkey.arbitrary.ArbitraryNullity;
 import com.navercorp.fixturemonkey.arbitrary.ArbitrarySet;
 import com.navercorp.fixturemonkey.arbitrary.ArbitrarySetArbitrary;
+import com.navercorp.fixturemonkey.arbitrary.ArbitrarySetPostCondition;
 import com.navercorp.fixturemonkey.arbitrary.ArbitrarySpecAny;
 import com.navercorp.fixturemonkey.arbitrary.ArbitraryTraverser;
 import com.navercorp.fixturemonkey.arbitrary.ArbitraryTree;
@@ -279,15 +279,16 @@ public final class ArbitraryBuilder<T> {
 		return this;
 	}
 
-	public <U> ArbitraryBuilder<T> filter(String expression, Class<U> clazz, Predicate<U> filter, long limit) {
+	public <U> ArbitraryBuilder<T> setPostCondition(String expression, Class<U> clazz, Predicate<U> filter,
+		long limit) {
 		ArbitraryExpression arbitraryExpression = ArbitraryExpression.from(expression);
-		this.builderManipulators.add(new ArbitraryFilter<>(clazz, arbitraryExpression, filter, limit));
+		this.builderManipulators.add(new ArbitrarySetPostCondition<>(clazz, arbitraryExpression, filter, limit));
 		return this;
 	}
 
-	public <U> ArbitraryBuilder<T> filter(String expression, Class<U> clazz, Predicate<U> filter) {
+	public <U> ArbitraryBuilder<T> setPostCondition(String expression, Class<U> clazz, Predicate<U> filter) {
 		ArbitraryExpression arbitraryExpression = ArbitraryExpression.from(expression);
-		this.builderManipulators.add(new ArbitraryFilter<>(clazz, arbitraryExpression, filter));
+		this.builderManipulators.add(new ArbitrarySetPostCondition<>(clazz, arbitraryExpression, filter));
 		return this;
 	}
 

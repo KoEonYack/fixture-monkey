@@ -56,12 +56,12 @@ public class ExpressionSpecTest {
 	}
 
 	@Property
-	void mergeFilter() {
+	void mergePostCondition() {
 		ExpressionSpec merger = new ExpressionSpec()
-			.filter("test", Objects::nonNull);
+			.setPostCondition("test", String.class, Objects::nonNull);
 		ExpressionSpec merged = new ExpressionSpec()
-			.filter("test", Objects::nonNull)
-			.filter("test", Objects::nonNull);
+			.setPostCondition("test", String.class, Objects::nonNull)
+			.setPostCondition("test", String.class, Objects::nonNull);
 
 		ExpressionSpec actual = merger.merge(merged);
 
@@ -69,12 +69,12 @@ public class ExpressionSpecTest {
 	}
 
 	@Property
-	void mergeFilterNotOverwrite() {
+	void mergePostConditionNotOverwrite() {
 		ExpressionSpec merger = new ExpressionSpec()
-			.filter("test", Objects::nonNull)
-			.filter("test", Objects::nonNull);
+			.setPostCondition("test", String.class, Objects::nonNull)
+			.setPostCondition("test", String.class, Objects::nonNull);
 		ExpressionSpec merged = new ExpressionSpec()
-			.filter("test", Objects::nonNull);
+			.setPostCondition("test", String.class, Objects::nonNull);
 
 		ExpressionSpec actual = merger.merge(merged, false);
 
@@ -117,12 +117,12 @@ public class ExpressionSpecTest {
 	}
 
 	@Property
-	void hasFilter() {
+	void hasPostCondition() {
 		ExpressionSpec actual = new ExpressionSpec()
-			.filter("test", Objects::nonNull);
+			.setPostCondition("test", String.class, Objects::nonNull);
 
 		then(actual.hasSet("test")).isFalse();
-		then(actual.hasFilter("test")).isTrue();
+		then(actual.hasPostCondition("test")).isTrue();
 	}
 
 	@Property
@@ -130,7 +130,7 @@ public class ExpressionSpecTest {
 		ExpressionSpec actual = new ExpressionSpec()
 			.set("test", "test");
 
-		then(actual.hasFilter("test")).isFalse();
+		then(actual.hasPostCondition("test")).isFalse();
 		then(actual.hasSet("test")).isTrue();
 	}
 

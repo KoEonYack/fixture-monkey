@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
@@ -401,60 +400,51 @@ class FixtureMonkeyTest {
 	}
 
 	@Provide
-	Arbitrary<IntegerWrapperClass> specFilter() {
+	Arbitrary<IntegerWrapperClass> specPostCondition() {
 		return this.sut.giveMeBuilder(IntegerWrapperClass.class)
-			.spec(new ExpressionSpec().<Integer>filter(
+			.spec(new ExpressionSpec().setPostCondition(
 				"value",
+				Integer.class,
 				value -> value >= 0 && value <= 100
 			))
 			.build();
 	}
 
 	@Property
-	void giveMeSpecFilter(@ForAll("specFilter") IntegerWrapperClass actual) {
+	void giveMeSpecPostCondition(@ForAll("specPostCondition") IntegerWrapperClass actual) {
 		then(actual.value).isBetween(0, 100);
 	}
 
 	@Provide
-	Arbitrary<IntegerWrapperClass> specFilterType() {
+	Arbitrary<IntegerWrapperClass> specPostConditionType() {
 		return this.sut.giveMeBuilder(IntegerWrapperClass.class)
-			.spec(new ExpressionSpec().filterInteger(
+			.spec(new ExpressionSpec().setPostCondition(
 				"value",
+				Integer.class,
 				value -> value >= 0 && value <= 100
 			))
 			.build();
 	}
 
 	@Property
-	void giveMeSpecFilterType(@ForAll("specFilterType") IntegerWrapperClass actual) {
+	void giveMeSpecPostConditionType(@ForAll("specPostConditionType") IntegerWrapperClass actual) {
 		then(actual.value).isBetween(0, 100);
 	}
 
 	@Provide
-	Arbitrary<IntegerListClass> filterIndex() {
+	Arbitrary<IntegerListClass> postConditionIndex() {
 		return this.sut.giveMeBuilder(IntegerListClass.class)
 			.spec(new ExpressionSpec()
-				.filterInteger("values[0]", value -> value >= 0 && value <= 100)
+				.setPostCondition("values[0]", Integer.class, value -> value >= 0 && value <= 100)
 				.size("values", 1, 1))
 			.build();
 	}
 
 	@Property
-	void giveMeFilterIndex(@ForAll("filterIndex") IntegerListClass actual) {
+	void giveMePostConditionIndex(@ForAll("postConditionIndex") IntegerListClass actual) {
 		then(actual.values).hasSize(1);
 		then(actual.values.get(0)).isBetween(0, 100);
 	}
-
-	// @Provide
-	// Arbitrary<IntegerWrapperClass> objectToBuilder() {
-	// 	IntegerWrapperClass expected = this.sut.giveMeOne(IntegerWrapperClass.class);
-	//
-	// 	return this.sut.giveMeBuilder(expected).build();
-	// }
-	//
-	// @Property
-	// void giveMeObjectToBuilder(@ForAll("objectToBuilder") IntegerWrapperClass actual) {
-	// }
 
 	@Provide
 	Arbitrary<IntegerWrapperClass> objectToBuilderSet() {
@@ -740,30 +730,30 @@ class FixtureMonkeyTest {
 	}
 
 	@Provide
-	Arbitrary<StringListClass> filterLimitIndex() {
+	Arbitrary<StringListClass> postConditionLimitIndex() {
 		return this.sut.giveMeBuilder(StringListClass.class)
 			.size("values", 2, 2)
-			.filter("values[*]", String.class, it -> it.length() > 0)
-			.filter("values[*]", String.class, it -> it.length() > 5, 1)
+			.setPostCondition("values[*]", String.class, it -> it.length() > 0)
+			.setPostCondition("values[*]", String.class, it -> it.length() > 5, 1)
 			.build();
 	}
 
 	@Property
-	void giveMeFilterLimitIndex(@ForAll("filterLimitIndex") StringListClass actual) {
+	void giveMePostConditionLimitIndex(@ForAll("postConditionLimitIndex") StringListClass actual) {
 		then(actual.values).anyMatch(it -> it.length() > 5);
 	}
 
 	@Provide
-	Arbitrary<StringListClass> filterLimitIndexNotOverwriteIfLimitIsZero() {
+	Arbitrary<StringListClass> postConditionLimitIndexNotOverwriteIfLimitIsZero() {
 		return this.sut.giveMeBuilder(StringListClass.class)
-			.filter("values[*]", String.class, it -> it.length() > 5)
-			.filter("values[*]", String.class, it -> it.length() == 0, 0)
+			.setPostCondition("values[*]", String.class, it -> it.length() > 5)
+			.setPostCondition("values[*]", String.class, it -> it.length() == 0, 0)
 			.build();
 	}
 
 	@Property
-	void giveMefilterLimitIndexNotOverwriteIfLimitIsZeroReturnsNotFilter(
-		@ForAll("filterLimitIndexNotOverwriteIfLimitIsZero") StringListClass actual
+	void giveMepostConditionLimitIndexNotOverwriteIfLimitIsZeroReturnsNotPostCondition(
+		@ForAll("postConditionLimitIndexNotOverwriteIfLimitIsZero") StringListClass actual
 	) {
 		then(actual.values).allMatch(it -> it.length() > 5);
 	}
@@ -827,51 +817,28 @@ class FixtureMonkeyTest {
 	}
 
 	@Provide
-	Arbitrary<IntegerListClass> specListFilterElement() {
+	Arbitrary<IntegerListClass> specListPostConditionElement() {
 		return this.sut.giveMeBuilder(IntegerListClass.class)
 			.spec(new ExpressionSpec().list("values", it -> {
 				it.ofSize(1);
-				it.<Integer>filterElement(0, filtered -> filtered > 1);
+				it.setElementPostCondition(0, Integer.class, postConditioned -> postConditioned > 1);
 			}))
 			.build();
 	}
 
 	@Property
-	void giveMeSpecListFilterElement(@ForAll("specListFilterElement") IntegerListClass actual) {
+	void giveMeSpecListPostConditionElement(@ForAll("specListPostConditionElement") IntegerListClass actual) {
 		then(actual.values).hasSize(1);
 		then(actual.values.get(0)).isGreaterThan(1);
 	}
 
 	@Property
-	void giveMeSpecListAnyFilter() {
-		IntegerListClass actual = this.sut.giveMeBuilder(IntegerListClass.class)
-			.spec(new ExpressionSpec().list("values", it -> {
-				it.ofSize(3);
-				it.<Integer>any(filtered -> filtered > 1);
-			}))
-			.sample();
-
-		then(actual.values).anyMatch(it -> it > 1);
-	}
-
-	@Property
-	void giveMeSpecListAllFilter() {
-		IntegerListClass actual = this.sut.giveMeBuilder(IntegerListClass.class)
-			.spec(new ExpressionSpec().list("values", it -> {
-				it.ofSize(3);
-				it.<Integer>all(filtered -> filtered > 1);
-			}))
-			.sample();
-
-		then(actual.values).allMatch(it -> it > 1);
-	}
-
-	@Property
-	void giveMeSpecListFilterElementField() {
+	void giveMeSpecListPostConditionElementField() {
 		NestedStringList actual = this.sut.giveMeBuilder(NestedStringList.class)
 			.spec(new ExpressionSpec().list("values", it -> {
 				it.ofSize(1);
-				it.<String>filterElementField(0, "value", filtered -> filtered.length() > 5);
+				it.setElementFieldPostCondition(0, "value", String.class,
+					postConditioned -> postConditioned.length() > 5);
 			}))
 			.sample();
 
@@ -896,13 +863,13 @@ class FixtureMonkeyTest {
 	}
 
 	@Property
-	void giveMeSpecListListElementFilter() {
+	void giveMeSpecListListElementPostCondition() {
 		ListListString actual = this.sut.giveMeBuilder(ListListString.class)
 			.spec(new ExpressionSpec().list("values", it -> {
 				it.ofSize(1);
 				it.listElement(0, nestedIt -> {
 					nestedIt.ofSize(1);
-					nestedIt.<String>filterElement(0, filtered -> filtered.length() > 5);
+					nestedIt.setElementPostCondition(0, String.class, postConditioned -> postConditioned.length() > 5);
 				});
 			}))
 			.sample();
@@ -996,19 +963,19 @@ class FixtureMonkeyTest {
 	}
 
 	@Provide
-	Arbitrary<StringListClass> filterRightOrder() {
+	Arbitrary<StringListClass> postConditionRightOrder() {
 		return this.sut.giveMeBuilder(StringListClass.class)
 			.spec(new ExpressionSpec()
 				.list("values",
 					(it) -> it.ofSize(2)
-						.filterElement(0, (Predicate<String>)s -> s.length() > 5)
-						.filterElement(1, (Predicate<String>)s -> s.length() > 10)
+						.setElementPostCondition(0, String.class, s -> s.length() > 5)
+						.setElementPostCondition(1, String.class, s -> s.length() > 10)
 				))
 			.build();
 	}
 
 	@Property
-	void giveMeFilterRightOrder(@ForAll("filterRightOrder") StringListClass actual) {
+	void giveMePostConditionRightOrder(@ForAll("postConditionRightOrder") StringListClass actual) {
 		List<String> values = actual.getValues();
 		then(values.size()).isEqualTo(2);
 		then(values.get(0).length()).isGreaterThan(5);
@@ -1325,12 +1292,12 @@ class FixtureMonkeyTest {
 	}
 
 	@Property
-	void toExpressionSpecFilter() {
+	void toExpressionSpecPostCondition() {
 		ExpressionSpec actual = this.sut.giveMeBuilder(IntegerWrapperClass.class)
-			.filter("value", Integer.class, it -> true)
+			.setPostCondition("value", Integer.class, it -> true)
 			.toExpressionSpec();
 
-		then(actual.hasFilter("value")).isTrue();
+		then(actual.hasPostCondition("value")).isTrue();
 	}
 
 	@Property

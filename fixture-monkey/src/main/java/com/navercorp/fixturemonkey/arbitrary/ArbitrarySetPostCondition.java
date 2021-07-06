@@ -7,20 +7,21 @@ import net.jqwik.api.Arbitrary;
 
 import com.navercorp.fixturemonkey.TypeSupports;
 
-public final class ArbitraryFilter<T> extends AbstractArbitraryExpressionManipulator
+public final class ArbitrarySetPostCondition<T> extends AbstractArbitraryExpressionManipulator
 	implements PostArbitraryManipulator<T> {
 	private final Class<T> clazz;
 	private final Predicate<T> filter;
 	private long limit;
 
-	public ArbitraryFilter(Class<T> clazz, ArbitraryExpression arbitraryExpression, Predicate<T> filter, long limit) {
+	public ArbitrarySetPostCondition(Class<T> clazz, ArbitraryExpression arbitraryExpression, Predicate<T> filter,
+		long limit) {
 		super(arbitraryExpression);
 		this.clazz = clazz;
 		this.filter = filter;
 		this.limit = limit;
 	}
 
-	public ArbitraryFilter(Class<T> clazz, ArbitraryExpression arbitraryExpression, Predicate<T> filter) {
+	public ArbitrarySetPostCondition(Class<T> clazz, ArbitraryExpression arbitraryExpression, Predicate<T> filter) {
 		this(clazz, arbitraryExpression, filter, Long.MAX_VALUE);
 	}
 
@@ -46,8 +47,8 @@ public final class ArbitraryFilter<T> extends AbstractArbitraryExpressionManipul
 	}
 
 	@Override
-	public ArbitraryFilter<T> copy() {
-		return new ArbitraryFilter<>(this.clazz, this.getArbitraryExpression(), this.filter, this.limit);
+	public ArbitrarySetPostCondition<T> copy() {
+		return new ArbitrarySetPostCondition<>(this.clazz, this.getArbitraryExpression(), this.filter, this.limit);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -59,7 +60,7 @@ public final class ArbitraryFilter<T> extends AbstractArbitraryExpressionManipul
 		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
-		ArbitraryFilter<T> that = (ArbitraryFilter<T>)obj;
+		ArbitrarySetPostCondition<T> that = (ArbitrarySetPostCondition<T>)obj;
 		return clazz.equals(that.clazz)
 			&& getArbitraryExpression().equals(that.getArbitraryExpression())
 			&& filter.equals(that.filter);
