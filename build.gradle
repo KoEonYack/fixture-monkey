@@ -31,7 +31,7 @@ subprojects {
     targetCompatibility = JavaVersion.VERSION_1_8
 
     ext {
-        JQWIK_VERSION = "1.5.2"
+        JQWIK_VERSION = "1.3.9"
     }
 
     dependencies {

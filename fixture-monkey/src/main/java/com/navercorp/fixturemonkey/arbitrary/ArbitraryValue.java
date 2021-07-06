@@ -27,11 +27,11 @@ import net.jqwik.api.Tuple.Tuple2;
 import net.jqwik.api.Tuple.Tuple3;
 import net.jqwik.api.Tuple.Tuple4;
 import net.jqwik.api.Tuple.Tuple5;
-import net.jqwik.api.arbitraries.ArrayArbitrary;
 import net.jqwik.api.arbitraries.IteratorArbitrary;
 import net.jqwik.api.arbitraries.ListArbitrary;
 import net.jqwik.api.arbitraries.SetArbitrary;
 import net.jqwik.api.arbitraries.StreamArbitrary;
+import net.jqwik.api.arbitraries.StreamableArbitrary;
 
 import com.navercorp.fixturemonkey.validator.ArbitraryValidator;
 
@@ -66,6 +66,11 @@ final class ArbitraryValue<T> implements Arbitrary<T> {
 	}
 
 	@Override
+	public boolean isUnique() {
+		return getArbitrary().isUnique();
+	}
+
+	@Override
 	public Optional<ExhaustiveGenerator<T>> exhaustive() {
 		return getArbitrary().exhaustive();
 	}
@@ -76,8 +81,8 @@ final class ArbitraryValue<T> implements Arbitrary<T> {
 	}
 
 	@Override
-	public EdgeCases<T> edgeCases(int maxEdgeCases) {
-		return getArbitrary().edgeCases(maxEdgeCases);
+	public EdgeCases<T> edgeCases() {
+		return getArbitrary().edgeCases();
 	}
 
 	@Override
@@ -111,6 +116,11 @@ final class ArbitraryValue<T> implements Arbitrary<T> {
 	}
 
 	@Override
+	public Arbitrary<T> unique() {
+		return getArbitrary().unique();
+	}
+
+	@Override
 	public Arbitrary<T> fixGenSize(int genSize) {
 		return getArbitrary().fixGenSize(genSize);
 	}
@@ -136,8 +146,8 @@ final class ArbitraryValue<T> implements Arbitrary<T> {
 	}
 
 	@Override
-	public <A> ArrayArbitrary<T, A> array(Class<A> arrayClass) {
-		return Arbitrary.super.array(arrayClass);
+	public <A> StreamableArbitrary<T, A> array(Class<A> arrayClass) {
+		return getArbitrary().array(arrayClass);
 	}
 
 	@Override
@@ -223,11 +233,6 @@ final class ArbitraryValue<T> implements Arbitrary<T> {
 	@Override
 	public Arbitrary<T> edgeCases(Consumer<Config<T>> configurator) {
 		return getArbitrary().edgeCases(configurator);
-	}
-
-	@Override
-	public Arbitrary<T> withoutEdgeCases() {
-		return getArbitrary().withoutEdgeCases();
 	}
 
 	private synchronized Arbitrary<T> getArbitrary() {

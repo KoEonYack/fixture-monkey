@@ -19,7 +19,6 @@ import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
 
 import com.navercorp.fixturemonkey.TypeSupports;
-import com.navercorp.fixturemonkey.generator.ArbitraryGenerator;
 
 public final class ArbitraryNode<T> {
 	private static final String HEAD_NAME = "HEAD";
@@ -168,9 +167,7 @@ public final class ArbitraryNode<T> {
 	}
 
 	public void setArbitrary(Arbitrary<T> arbitrary) {
-		this.getStatus().setArbitrary(arbitrary.withoutEdgeCases());
-		// since 1.4.0, OOM happens when sampling complex object, disabling until it is fixed
-		// https://github.com/jlink/jqwik/issues/200
+		this.getStatus().setArbitrary(arbitrary);
 	}
 
 	public void setManipulated(boolean manipulated) {

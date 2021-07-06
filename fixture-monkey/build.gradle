@@ -10,7 +10,6 @@ plugins {
 
 dependencies {
     api("net.jqwik:jqwik:${JQWIK_VERSION}")
-    api("net.jqwik:jqwik-web:${JQWIK_VERSION}")
     compileOnly("net.jqwik:jqwik-engine:${JQWIK_VERSION}")
     compile("javax.validation:validation-api:2.0.1.Final")
     compile("com.github.mifmif:generex:1.0.2")

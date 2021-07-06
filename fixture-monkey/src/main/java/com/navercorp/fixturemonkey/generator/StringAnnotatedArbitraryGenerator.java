@@ -1,10 +1,8 @@
 package com.navercorp.fixturemonkey.generator;
 
-import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,13 +14,15 @@ import javax.validation.constraints.Pattern;
 import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
 import net.jqwik.api.arbitraries.StringArbitrary;
-import net.jqwik.web.api.Web;
 
 public class StringAnnotatedArbitraryGenerator implements AnnotatedArbitraryGenerator<String> {
 	public static final StringAnnotatedArbitraryGenerator INSTANCE = new StringAnnotatedArbitraryGenerator();
+	private static final java.util.regex.Pattern EMPTY_PATTERN = java.util.regex.Pattern.compile("");
+	private static final java.util.regex.Pattern SPACE_PATTERN = java.util.regex.Pattern.compile(" ");
+	private static final java.util.regex.Pattern BLANK_PATTERN = java.util.regex.Pattern.compile("[\n\t ]");
+	private static final java.util.regex.Pattern CONTROL_BLOCK_PATTERN = java.util.regex.Pattern.compile(
+		"[\u0000-\u001f\u007f]");
 	private static final RegexGenerator REGEX_GENERATOR = new RegexGenerator();
-	private static final char[] WHITESPACE_CHARACTER = new char[] {' ', '\n', '\t', '\u000B', '\f', '\r', '\u001C',
-		'\u001D', '\u001E', '\u001F'};
 
 	@Override
 	public Arbitrary<String> generate(AnnotationSource annotationSource) {
@@ -64,7 +64,7 @@ public class StringAnnotatedArbitraryGenerator implements AnnotatedArbitraryGene
 
 		Arbitrary<String> arbitrary;
 		if (annotationSource.findAnnotation(Email.class).isPresent()) {
-			arbitrary = Web.emails();
+			arbitrary = Arbitraries.emails();
 			if (min != null) {
 				int emailMinLength = min.intValue();
 				arbitrary = arbitrary.filter(it -> it != null && it.length() >= emailMinLength);
@@ -86,21 +86,20 @@ public class StringAnnotatedArbitraryGenerator implements AnnotatedArbitraryGene
 			} else {
 				stringArbitrary = stringArbitrary.ascii();
 			}
-
-			StringBuilder sb = new StringBuilder();
-			for (char toExclude = '\u0000'; toExclude < '\u0020'; toExclude++) {
-				sb.append(toExclude);
-			}
-			sb.append('\u007f');
-
-			if (notBlank) {
-				sb.append(WHITESPACE_CHARACTER);
-			}
-			stringArbitrary = stringArbitrary.excludeChars(sb.toString().toCharArray());
 			arbitrary = stringArbitrary;
 		}
 
-		return arbitrary;
+		boolean shouldReplaceBlankCharacter = notBlank;
+		return arbitrary.map(v -> {
+			String value = v;
+			if (value != null && shouldReplaceBlankCharacter && !isNotBlank(value)) {
+				value = EMPTY_PATTERN.matcher(value).replaceAll("a");
+				value = SPACE_PATTERN.matcher(value).replaceAll("b");
+				value = BLANK_PATTERN.matcher(value).replaceAll("c");
+				value = CONTROL_BLOCK_PATTERN.matcher(value).replaceAll("d");
+			}
+			return value;
+		});
 	}
 
 	private boolean isNotBlank(String value) {
