@@ -12,6 +12,8 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import javax.annotation.Nullable;
+
 import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
 
@@ -29,7 +31,6 @@ import com.navercorp.fixturemonkey.arbitrary.BuilderManipulator;
 import com.navercorp.fixturemonkey.arbitrary.ContainerSizeManipulator;
 import com.navercorp.fixturemonkey.arbitrary.MetadataManipulator;
 import com.navercorp.fixturemonkey.arbitrary.PostArbitraryManipulator;
-import com.navercorp.fixturemonkey.arbitrary.PreArbitraryManipulator;
 
 public final class ExpressionSpec {
 	private final List<BuilderManipulator> builderManipulators;
@@ -43,9 +44,12 @@ public final class ExpressionSpec {
 	}
 
 	@SuppressWarnings({"rawtypes", "unchecked"})
-	public ExpressionSpec set(String expression, Object value) {
+	public ExpressionSpec set(String expression, @Nullable Object value) {
 		if (value == null) {
 			return this.setNull(expression);
+		}
+		if (value instanceof Arbitrary) {
+			return this.set(expression, (Arbitrary<?>)value);
 		}
 		ArbitraryExpression fixtureExpression = ArbitraryExpression.from(expression);
 		builderManipulators.add(new ArbitrarySet(fixtureExpression, value));
@@ -57,6 +61,9 @@ public final class ExpressionSpec {
 		if (value == null) {
 			return this.setNull(expression);
 		}
+		if (value instanceof Arbitrary) {
+			return this.set(expression, (Arbitrary<?>)value);
+		}
 		ArbitraryExpression fixtureExpression = ArbitraryExpression.from(expression);
 		builderManipulators.add(new ArbitrarySet(fixtureExpression, value, limit));
 		return this;
@@ -64,12 +71,19 @@ public final class ExpressionSpec {
 
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	public <T> ExpressionSpec set(String expression, Arbitrary<T> arbitrary) {
+		if (arbitrary == null) {
+			return this.setNull(null);
+		}
 		ArbitraryExpression fixtureExpression = ArbitraryExpression.from(expression);
 		builderManipulators.add(new ArbitrarySetArbitrary(fixtureExpression, arbitrary));
 		return this;
 	}
 
 	public ExpressionSpec set(String expression, ExpressionSpec spec) {
+		if (spec == null) {
+			return this.setNull(expression);
+		}
+
 		ExpressionSpec copied = spec.copy();
 		for (BuilderManipulator arbitraryManipulator : copied.builderManipulators) {
 			if (arbitraryManipulator instanceof AbstractArbitraryExpressionManipulator) {
