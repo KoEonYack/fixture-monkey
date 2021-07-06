@@ -1414,6 +1414,85 @@ class FixtureMonkeyTest {
 		then(actual).isNotNull();
 	}
 
+	@Property
+	void generatorMapFieldReflectionGeneratorWithBuilderGeneratorWithCustomizer() {
+		FixtureMonkey sut = FixtureMonkey.builder()
+			.defaultGenerator(FieldReflectionArbitraryGenerator.INSTANCE)
+			.putGenerator(BuilderIntegerClass.class, BuilderArbitraryGenerator.INSTANCE)
+			.addCustomizer(BuilderIntegerClass.class, new ArbitraryCustomizer<BuilderIntegerClass>() {
+				@Override
+				public void customizeFields(Class<BuilderIntegerClass> type, FieldArbitraries fieldArbitraries) {
+					fieldArbitraries.replaceArbitrary("value", Arbitraries.just(-1));
+				}
+
+				@Override
+				public BuilderIntegerClass customizeFixture(BuilderIntegerClass object) {
+					return object;
+				}
+			})
+			.build();
+
+		FieldReflectionInnerBuilderClass actual = sut.giveMeBuilder(FieldReflectionInnerBuilderClass.class)
+			.setNotNull("value")
+			.sample();
+
+		then(actual.value.value).isEqualTo(-1);
+	}
+
+	@Property
+	void overwriteCustomize() {
+		FixtureMonkey sut = FixtureMonkey.builder()
+			.addCustomizer(BuilderIntegerClass.class, new ArbitraryCustomizer<BuilderIntegerClass>() {
+				@Override
+				public void customizeFields(Class<BuilderIntegerClass> type, FieldArbitraries fieldArbitraries) {
+					fieldArbitraries.replaceArbitrary("value", Arbitraries.just(-1));
+				}
+
+				@Override
+				public BuilderIntegerClass customizeFixture(BuilderIntegerClass object) {
+					return object;
+				}
+			})
+			.addCustomizer(BuilderIntegerClass.class, new ArbitraryCustomizer<BuilderIntegerClass>() {
+				@Override
+				public void customizeFields(Class<BuilderIntegerClass> type, FieldArbitraries fieldArbitraries) {
+					fieldArbitraries.replaceArbitrary("value", Arbitraries.just(-2));
+				}
+
+				@Override
+				public BuilderIntegerClass customizeFixture(BuilderIntegerClass object) {
+					return object;
+				}
+			})
+			.build();
+
+		BuilderIntegerClass actual = sut.giveMeBuilder(BuilderIntegerClass.class)
+			.generator(BuilderArbitraryGenerator.INSTANCE)
+			.sample();
+
+		then(actual.value).isEqualTo(-2);
+	}
+
+	@Property
+	void nestedCustomize() {
+		FixtureMonkey sut = FixtureMonkey.builder()
+			.addCustomizer(StringWrapperClass.class, it -> new StringWrapperClass("test"))
+			.addCustomizer(IntegerWrapperClass.class, it -> {
+				IntegerWrapperClass integerWrapperClass = new IntegerWrapperClass();
+				integerWrapperClass.value = -1;
+				return integerWrapperClass;
+			})
+			.build();
+
+		StringIntegerClass actual = sut.giveMeBuilder(StringIntegerClass.class)
+			.setNotNull("value1")
+			.setNotNull("value2")
+			.sample();
+
+		then(actual.value1.value).isEqualTo("test");
+		then(actual.value2.value).isEqualTo(-1);
+	}
+
 	@Data
 	public static class IntegerWrapperClass {
 		int value;
@@ -1588,5 +1667,11 @@ class FixtureMonkeyTest {
 
 	public static class FieldReflectionInnerBuilderClass {
 		BuilderIntegerClass value;
+	}
+
+	@Data
+	public static class StringIntegerClass {
+		StringWrapperClass value1;
+		IntegerWrapperClass value2;
 	}
 }

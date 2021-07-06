@@ -12,7 +12,6 @@ import net.jqwik.api.Arbitrary;
 import com.navercorp.fixturemonkey.arbitrary.ArbitraryTraverser;
 import com.navercorp.fixturemonkey.customizer.ArbitraryCustomizer;
 import com.navercorp.fixturemonkey.customizer.ArbitraryCustomizers;
-import com.navercorp.fixturemonkey.customizer.WithFixtureCustomizer;
 import com.navercorp.fixturemonkey.generator.ArbitraryGenerator;
 import com.navercorp.fixturemonkey.validator.ArbitraryValidator;
 
@@ -79,9 +78,9 @@ public class FixtureMonkey {
 		return new ArbitraryBuilder<>(
 			clazz,
 			options,
-			getGenerator(clazz),
+			defaultGenerator,
 			validator,
-			new ArbitraryCustomizers(),
+			arbitraryCustomizers,
 			this.generatorMap
 		);
 	}
@@ -90,7 +89,7 @@ public class FixtureMonkey {
 		return new ArbitraryBuilder<>(
 			value,
 			new ArbitraryTraverser(options),
-			getGenerator(value.getClass()),
+			defaultGenerator,
 			validator,
 			this.arbitraryCustomizers,
 			this.generatorMap
@@ -107,22 +106,10 @@ public class FixtureMonkey {
 		return new ArbitraryBuilder<>(
 			clazz,
 			options,
-			this.getGenerator(clazz, newArbitraryCustomizers),
+			defaultGenerator,
 			this.validator,
 			newArbitraryCustomizers,
 			this.generatorMap
 		);
-	}
-
-	private <T> ArbitraryGenerator getGenerator(Class<T> type) {
-		return this.getGenerator(type, this.arbitraryCustomizers);
-	}
-
-	private <T> ArbitraryGenerator getGenerator(Class<T> type, ArbitraryCustomizers arbitraryCustomizers) {
-		ArbitraryGenerator generator = this.generatorMap.getOrDefault(type, this.defaultGenerator);
-		if (generator instanceof WithFixtureCustomizer) {
-			generator = ((WithFixtureCustomizer)generator).withFixtureCustomizers(arbitraryCustomizers);
-		}
-		return generator;
 	}
 }
