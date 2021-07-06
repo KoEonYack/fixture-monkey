@@ -18,9 +18,6 @@ allprojects {
 
     repositories {
         mavenCentral()
-
-        // For snapshot releases only:
-        maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
     }
 
     group = "com.navercorp.fixturemonkey"
@@ -34,7 +31,7 @@ subprojects {
     targetCompatibility = JavaVersion.VERSION_1_8
 
     ext {
-        JQWIK_VERSION = "1.5.3-SNAPSHOT"
+        JQWIK_VERSION = "1.5.2"
     }
 
     dependencies {
