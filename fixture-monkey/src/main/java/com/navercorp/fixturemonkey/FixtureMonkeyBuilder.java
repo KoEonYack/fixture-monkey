@@ -3,9 +3,6 @@ package com.navercorp.fixturemonkey;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
-import net.jqwik.api.Arbitrary;
 
 import com.navercorp.fixturemonkey.ArbitraryOption.FixtureOptionsBuilder;
 import com.navercorp.fixturemonkey.arbitrary.NullableArbitraryEvaluator;
@@ -42,12 +39,12 @@ public class FixtureMonkeyBuilder {
 		return this;
 	}
 
-	public FixtureMonkeyBuilder fixtureCustomizers(Map<Class<?>, ArbitraryCustomizer<?>> customizer) {
+	public FixtureMonkeyBuilder customizers(Map<Class<?>, ArbitraryCustomizer<?>> customizer) {
 		this.customizerMap = customizer;
 		return this;
 	}
 
-	public FixtureMonkeyBuilder fixtureCustomizers(ArbitraryCustomizers arbitraryCustomizers) {
+	public FixtureMonkeyBuilder customizers(ArbitraryCustomizers arbitraryCustomizers) {
 		this.arbitraryCustomizers = arbitraryCustomizers;
 		return this;
 	}
