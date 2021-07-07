@@ -33,10 +33,15 @@ public final class ArbitraryTraverser {
 		this.arbitraryOption = arbitraryOption;
 	}
 
+	public <T> void traverse(ArbitraryNode<T> node, boolean keyOfMapStructure, FieldNameResolver fieldNameResolver) {
+		doTraverse(node, keyOfMapStructure, node.getValueSupplier().get() != null, fieldNameResolver);
+	}
+
 	@SuppressWarnings({"rawtypes", "unchecked"})
-	public <T> void traverse(
+	private <T> void doTraverse(
 		ArbitraryNode<T> node,
 		boolean keyOfMapStructure,
+		boolean decompose,
 		FieldNameResolver fieldNameResolver
 	) {
 		node.getChildren().clear();
@@ -55,6 +60,7 @@ public final class ArbitraryTraverser {
 				Object nextValue;
 				if (value != null) {
 					nextValue = extractValue(value, field);
+					decompose = true;
 					nullable = false;
 				} else {
 					nextValue = null;
@@ -70,25 +76,25 @@ public final class ArbitraryTraverser {
 					.build();
 
 				node.addChildNode(nextFrame);
-				traverse(nextFrame, false, fieldNameResolver);
+				doTraverse(nextFrame, false, decompose, fieldNameResolver);
 			}
 		} else {
-			if (!currentNodeType.isContainer() && value != null) {
+			if (!currentNodeType.isContainer() && decompose) {
 				node.setArbitrary(Arbitraries.just(value));
 			} else if (arbitraryOption.isDefaultArbitraryType(currentNodeType.getType())) {
 				Arbitrary<T> registeredArbitrary = registeredArbitrary(node);
 				node.setArbitrary(registeredArbitrary);
 			} else if (currentNodeType.isContainer()) {
 				if (currentNodeType.isMap() || currentNodeType.isMapEntry()) {
-					if (value != null) {
+					if (decompose) {
 						node.setArbitrary(Arbitraries.just(value));
 						return;
 					}
 					mapArbitrary(node, fieldNameResolver);
 				} else if (currentNodeType.isArray()) {
-					arrayArbitrary(node, fieldNameResolver);
+					arrayArbitrary(node, decompose, fieldNameResolver);
 				} else {
-					containerArbitrary((ArbitraryNode<? extends Collection>)node, fieldNameResolver);
+					containerArbitrary((ArbitraryNode<? extends Collection>)node, decompose, fieldNameResolver);
 				}
 			} else if (clazz.isEnum()) {
 				Arbitrary<T> arbitrary = (Arbitrary<T>)Arbitraries.of((Class<Enum>)clazz);
@@ -160,6 +166,7 @@ public final class ArbitraryTraverser {
 	@SuppressWarnings("unchecked")
 	private <T, U> void containerArbitrary(
 		ArbitraryNode<T> currentNode,
+		boolean decompose,
 		FieldNameResolver fieldNameResolver
 	) {
 		ArbitraryType<T> clazz = currentNode.getType();
@@ -172,7 +179,11 @@ public final class ArbitraryTraverser {
 		int currentIndex = 0;
 		int elementSize = Integer.MAX_VALUE;
 
-		if (value != null) {
+		if (decompose) {
+			if (value == null) {
+				currentNode.setArbitrary(Arbitraries.just(null));
+				return;
+			}
 			Iterator<U> iterator;
 			if (value instanceof Collection || value instanceof Iterator || value instanceof Stream) {
 				if (value instanceof Collection) {
@@ -199,7 +210,7 @@ public final class ArbitraryTraverser {
 						.indexOfIterable(currentIndex)
 						.build();
 					currentNode.addChildNode(nextNode);
-					traverse(nextNode, false, fieldNameResolver);
+					doTraverse(nextNode, false, decompose, fieldNameResolver);
 					currentIndex++;
 				}
 
@@ -225,7 +236,7 @@ public final class ArbitraryTraverser {
 						.indexOfIterable(0)
 						.build();
 					currentNode.addChildNode(nextNode);
-					traverse(nextNode, false, fieldNameResolver);
+					doTraverse(nextNode, false, decompose, fieldNameResolver);
 					return;
 				}
 			}
@@ -246,12 +257,16 @@ public final class ArbitraryTraverser {
 				.build();
 
 			currentNode.addChildNode(genericFrame);
-			traverse(genericFrame, false, fieldNameResolver);
+			doTraverse(genericFrame, false, decompose, fieldNameResolver);
 		}
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T, U> void arrayArbitrary(ArbitraryNode<T> currentNode, FieldNameResolver fieldNameResolver) {
+	private <T, U> void arrayArbitrary(
+		ArbitraryNode<T> currentNode,
+		boolean decompose,
+		FieldNameResolver fieldNameResolver
+	) {
 		ArbitraryType<T> clazz = currentNode.getType();
 		String fieldName = currentNode.getFieldName();
 
@@ -262,7 +277,11 @@ public final class ArbitraryTraverser {
 		int elementSize = Integer.MAX_VALUE;
 		int currentIndex = 0;
 
-		if (value != null) {
+		if (decompose) {
+			if (value == null) {
+				currentNode.setArbitrary(Arbitraries.just(null));
+				return;
+			}
 			int length = Array.getLength(value);
 
 			if (containerSizeConstraint != null) {
@@ -278,7 +297,7 @@ public final class ArbitraryTraverser {
 					.valueSupplier(() -> nextValue)
 					.build();
 				currentNode.addChildNode(nextNode);
-				traverse(nextNode, false, fieldNameResolver);
+				doTraverse(nextNode, false, decompose, fieldNameResolver);
 			}
 
 			if (containerSizeConstraint == null) {
@@ -302,7 +321,7 @@ public final class ArbitraryTraverser {
 				.build();
 
 			currentNode.addChildNode(genericFrame);
-			traverse(genericFrame, false, fieldNameResolver);
+			doTraverse(genericFrame, false, decompose, fieldNameResolver);
 		}
 	}
 
@@ -332,7 +351,7 @@ public final class ArbitraryTraverser {
 				.build();
 
 			currentNode.addChildNode(keyFrame);
-			traverse(keyFrame, true, fieldNameResolver);
+			doTraverse(keyFrame, true, false, fieldNameResolver);
 
 			ArbitraryNode<V> valueFrame = ArbitraryNode.<V>builder()
 				.type(valueType)
@@ -343,7 +362,7 @@ public final class ArbitraryTraverser {
 				.build();
 
 			currentNode.addChildNode(valueFrame);
-			traverse(valueFrame, false, fieldNameResolver);
+			doTraverse(valueFrame, false, false, fieldNameResolver);
 		}
 	}
 

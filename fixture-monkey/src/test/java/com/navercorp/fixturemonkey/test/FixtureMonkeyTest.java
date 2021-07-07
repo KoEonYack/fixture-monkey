@@ -1493,6 +1493,19 @@ class FixtureMonkeyTest {
 		then(actual.value2.value).isEqualTo(-1);
 	}
 
+	@Provide
+	Arbitrary<StringIntegerListClass> acceptIfWithNull() {
+		return this.sut.giveMeBuilder(StringIntegerListClass.class)
+			.set("value", "test")
+			.acceptIf(it -> it.value.equals("test"), builder -> builder.setNull("values"))
+			.build();
+	}
+
+	@Property
+	void giveMeAcceptIfWithNull(@ForAll("acceptIfWithNull") StringIntegerListClass actual) {
+		then(actual.values).isNull();
+	}
+
 	@Data
 	public static class IntegerWrapperClass {
 		int value;
@@ -1673,5 +1686,11 @@ class FixtureMonkeyTest {
 	public static class StringIntegerClass {
 		StringWrapperClass value1;
 		IntegerWrapperClass value2;
+	}
+
+	@Data
+	public static class StringIntegerListClass {
+		String value;
+		List<Integer> values;
 	}
 }
