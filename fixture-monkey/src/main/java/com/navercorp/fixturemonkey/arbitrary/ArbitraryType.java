@@ -17,7 +17,7 @@ import java.util.stream.BaseStream;
 
 import javax.annotation.Nullable;
 
-public final class ArbitraryType<T> {
+public class ArbitraryType<T> {
 	private final Class<T> type;
 	private final AnnotatedType annotatedType;
 	private final List<Annotation> annotations;
@@ -144,10 +144,6 @@ public final class ArbitraryType<T> {
 
 	public AnnotatedType getAnnotatedType() {
 		return annotatedType;
-	}
-
-	public boolean isNoneType() {
-		return type == Object.class;
 	}
 
 	private Optional<AnnotatedType> findGenericAnnotatedType(int index) {

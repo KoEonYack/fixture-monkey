@@ -1506,6 +1506,16 @@ class FixtureMonkeyTest {
 		then(actual.values).isNull();
 	}
 
+	@Property
+	void decompoesdNullCollectionReturnsNull() {
+		List<Integer> values = this.sut.giveMeBuilder(IntegerListClass.class)
+			.setNull("values")
+			.map(it -> it.values)
+			.sample();
+
+		then(values).isNull();
+	}
+
 	@Data
 	public static class IntegerWrapperClass {
 		int value;

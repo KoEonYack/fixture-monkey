@@ -7,6 +7,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -49,9 +50,7 @@ public final class ArbitraryTraverser {
 		ArbitraryType<T> currentNodeType = node.getType();
 		Class<?> clazz = currentNodeType.getType();
 
-		List<Field> fields = ReflectionUtils.findFields(clazz, this::availableField,
-			ReflectionUtils.HierarchyTraversalMode.TOP_DOWN);
-
+		List<Field> fields = getFields(clazz);
 		if (isTraversable(currentNodeType)) {
 			for (Field field : fields) {
 				ArbitraryType arbitraryType = getFixtureType(field);
@@ -96,7 +95,7 @@ public final class ArbitraryTraverser {
 				} else {
 					containerArbitrary((ArbitraryNode<? extends Collection>)node, decompose, fieldNameResolver);
 				}
-			} else if (clazz.isEnum()) {
+			} else if (currentNodeType.isEnum()) {
 				Arbitrary<T> arbitrary = (Arbitrary<T>)Arbitraries.of((Class<Enum>)clazz);
 				node.setArbitrary(arbitrary);
 			} else {
@@ -104,6 +103,18 @@ public final class ArbitraryTraverser {
 			}
 			// TODO: noGeneric
 		}
+	}
+
+	private List<Field> getFields(Class<?> clazz) {
+		if (clazz == null) {
+			return Collections.emptyList();
+		}
+
+		return ReflectionUtils.findFields(
+			clazz,
+			this::availableField,
+			ReflectionUtils.HierarchyTraversalMode.TOP_DOWN
+		);
 	}
 
 	private <T> Object extractValue(T value, Field field) {
@@ -372,8 +383,8 @@ public final class ArbitraryTraverser {
 
 	private boolean isTraversable(ArbitraryType<?> type) {
 		Class<?> clazz = type.getType();
-		if (clazz.getPackage() == null) {
-			return false; // primitive
+		if (clazz == null) {
+			return false;
 		}
 
 		return arbitraryOption.isExceptGeneratePackage(clazz)

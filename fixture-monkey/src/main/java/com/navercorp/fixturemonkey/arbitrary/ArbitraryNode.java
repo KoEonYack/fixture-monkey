@@ -236,8 +236,12 @@ public final class ArbitraryNode<T> {
 
 	@SuppressWarnings("unchecked")
 	public ArbitraryType<T> getType() {
-		if (type.isNoneType()) {
-			return new ArbitraryType<>((Class<T>)this.getValueSupplier().get().getClass());
+		if (type instanceof NullArbitraryType) {
+			T value = this.getValueSupplier().get();
+			if (value == null) {
+				return type;
+			}
+			return new ArbitraryType<>((Class<T>)value.getClass());
 		}
 		return type;
 	}
@@ -459,8 +463,8 @@ public final class ArbitraryNode<T> {
 	public static final class FixtureNodeBuilder<T> {
 		@SuppressWarnings("rawtypes")
 		private List<ArbitraryNode> children = new ArrayList<>();
-		@SuppressWarnings({"rawtypes", "unchecked"})
-		private ArbitraryType<T> type = new ArbitraryType(Object.class);
+		@SuppressWarnings("unchecked")
+		private ArbitraryType<T> type = NullArbitraryType.INSTANCE;
 		private String fieldName = HEAD_NAME;
 		private String metadata = "";
 		private int indexOfIterable = NO_OR_ALL_INDEX_INTEGER_VALUE;
