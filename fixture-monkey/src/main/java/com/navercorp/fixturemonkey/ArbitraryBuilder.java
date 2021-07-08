@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -337,6 +338,29 @@ public final class ArbitraryBuilder<T> {
 			this.generator = ((WithFixtureCustomizer)this.generator).withFixtureCustomizers(arbitraryCustomizers);
 		}
 		return this;
+	}
+
+	public ArbitraryBuilder<T> apply(BiConsumer<T, ArbitraryBuilder<T>> mapper) {
+		return new ArbitraryBuilder<>(() -> {
+			T sample = this.sample();
+			ArbitraryBuilder<T> newArbitraryBuilder = new ArbitraryBuilder<>(
+				sample,
+				this.traverser,
+				this.generator,
+				this.validator,
+				this.arbitraryCustomizers,
+				this.generatorMap
+			);
+			mapper.accept(sample, newArbitraryBuilder);
+			return newArbitraryBuilder.sample();
+		},
+			this.traverser,
+			this.generator,
+			this.validator,
+			this.arbitraryCustomizers,
+			this.generatorMap
+		);
+
 	}
 
 	@SuppressWarnings({"rawtypes", "unchecked"})

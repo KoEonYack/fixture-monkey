@@ -1516,6 +1516,16 @@ class FixtureMonkeyTest {
 		then(values).isNull();
 	}
 
+	@Property
+	void giveMeComplexApply() {
+		StringIntegerClass actual = this.sut.giveMeBuilder(StringIntegerClass.class)
+			.setNotNull("value2")
+			.apply((it, builder) -> builder.set("value1.value", String.valueOf(it.value2.value)))
+			.sample();
+
+		then(actual.value1.value).isEqualTo(String.valueOf(actual.value2.value));
+	}
+
 	@Data
 	public static class IntegerWrapperClass {
 		int value;
