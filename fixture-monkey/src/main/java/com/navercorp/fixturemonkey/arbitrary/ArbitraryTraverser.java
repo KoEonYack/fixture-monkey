@@ -98,6 +98,10 @@ public final class ArbitraryTraverser {
 			} else if (currentNodeType.isEnum()) {
 				Arbitrary<T> arbitrary = (Arbitrary<T>)Arbitraries.of((Class<Enum>)clazz);
 				node.setArbitrary(arbitrary);
+			} else if (currentNodeType.isInterface() || currentNodeType.isAbstract()) {
+				InterfaceSupplier interfaceSupplier =
+					arbitraryOption.getInterfaceSupplierOrDefault(currentNodeType.getType());
+				node.setArbitrary(Arbitraries.just((T)interfaceSupplier.get()));
 			} else {
 				node.setArbitrary(Arbitraries.just(null));
 			}
@@ -391,6 +395,8 @@ public final class ArbitraryTraverser {
 			&& !arbitraryOption.isDefaultArbitraryType(clazz)
 			&& !type.isContainer()
 			&& !type.isOptional()
-			&& !type.isEnum();
+			&& !type.isEnum()
+			&& !type.isInterface()
+			&& !type.isAbstract();
 	}
 }

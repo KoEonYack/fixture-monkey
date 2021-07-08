@@ -59,6 +59,7 @@ class FixtureMonkeyTest {
 		.putGenerator(FieldReflectionIntegerClass.class, FieldReflectionArbitraryGenerator.INSTANCE)
 		.putGenerator(NullIntegerClass.class, NullArbitraryGenerator.INSTANCE)
 		.putGenerator(BeanIntegerClass.class, BeanArbitraryGenerator.INSTANCE)
+		.addInterfaceSupplier(MockInterface.class, () -> () -> "test")
 		.build();
 
 	@Property
@@ -1526,6 +1527,24 @@ class FixtureMonkeyTest {
 		then(actual.value1.value).isEqualTo(String.valueOf(actual.value2.value));
 	}
 
+	@Property
+	void giveMeInterface() {
+		InterfaceWrapper actual = this.sut.giveMeBuilder(InterfaceWrapper.class)
+			.setNotNull("value")
+			.sample();
+
+		then(actual.value.get()).isEqualTo("test");
+	}
+
+	@Property
+	void giveMeInterfaceWithDefaultInterfaceSupplier() {
+		FixtureMonkey sut = FixtureMonkey.builder().build();
+
+		InterfaceWrapper actual = sut.giveMeOne(InterfaceWrapper.class);
+
+		then(actual.value).isNull();
+	}
+
 	@Data
 	public static class IntegerWrapperClass {
 		int value;
@@ -1712,5 +1731,14 @@ class FixtureMonkeyTest {
 	public static class StringIntegerListClass {
 		String value;
 		List<Integer> values;
+	}
+
+	public interface MockInterface {
+		String get();
+	}
+
+	@Data
+	public static class InterfaceWrapper {
+		MockInterface value;
 	}
 }

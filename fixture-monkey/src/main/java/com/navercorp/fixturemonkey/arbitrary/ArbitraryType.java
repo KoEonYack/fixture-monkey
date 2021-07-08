@@ -4,6 +4,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedArrayType;
 import java.lang.reflect.AnnotatedParameterizedType;
 import java.lang.reflect.AnnotatedType;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.util.Arrays;
 import java.util.Collection;
@@ -136,6 +137,14 @@ public class ArbitraryType<T> {
 
 	public boolean isEnum() {
 		return type.isEnum();
+	}
+
+	public boolean isInterface() {
+		return type.isInterface();
+	}
+
+	public boolean isAbstract() {
+		return Modifier.isAbstract(type.getModifiers());
 	}
 
 	public Class<?> getType() {

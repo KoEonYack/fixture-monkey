@@ -25,6 +25,7 @@ import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
+import com.navercorp.fixturemonkey.arbitrary.InterfaceSupplier;
 import com.navercorp.fixturemonkey.arbitrary.NullableArbitraryEvaluator;
 import com.navercorp.fixturemonkey.generator.AnnotatedArbitraryGenerator;
 import com.navercorp.fixturemonkey.generator.BigDecimalAnnotatedArbitraryGenerator;
@@ -57,23 +58,29 @@ public final class ArbitraryOption {
 	public static final ArbitraryOption DEFAULT_FIXTURE_OPTIONS = ArbitraryOption.builder().build();
 
 	private final Map<Class<?>, AnnotatedArbitraryGenerator<?>> annotatedArbitraryMap;
+	private final Map<Class<?>, InterfaceSupplier<?>> interfaceSupplierMap;
 	private final Set<String> exceptGeneratePackages;
 	private final Set<String> nonNullAnnotationNames;
 	private final NullableArbitraryEvaluator nullableArbitraryEvaluator;
+	private final InterfaceSupplier<?> defaultInterfaceSupplier;
 	private final double nullInject;
 	private final boolean nullableContainer;
 
 	public ArbitraryOption(
 		Map<Class<?>, AnnotatedArbitraryGenerator<?>> annotatedArbitraryMap,
+		Map<Class<?>, InterfaceSupplier<?>> interfaceSupplierMap,
 		Set<String> exceptGeneratePackages,
 		Set<String> nonNullAnnotationNames,
+		InterfaceSupplier<?> defaultInterfaceSupplier,
 		NullableArbitraryEvaluator nullableArbitraryEvaluator,
 		double nullInject,
 		boolean nullableContainer
 	) {
 		this.annotatedArbitraryMap = annotatedArbitraryMap;
+		this.interfaceSupplierMap = interfaceSupplierMap;
 		this.exceptGeneratePackages = exceptGeneratePackages;
 		this.nonNullAnnotationNames = nonNullAnnotationNames;
+		this.defaultInterfaceSupplier = defaultInterfaceSupplier;
 		this.nullableArbitraryEvaluator = nullableArbitraryEvaluator;
 		this.nullInject = nullInject;
 		this.nullableContainer = nullableContainer;
@@ -110,6 +117,15 @@ public final class ArbitraryOption {
 		String packageName = clazz.getPackage().getName();
 		return exceptGeneratePackages.stream()
 			.noneMatch(packageName::startsWith);
+	}
+
+	public Map<Class<?>, InterfaceSupplier<?>> getInterfaceSupplierMap() {
+		return interfaceSupplierMap;
+	}
+
+	@SuppressWarnings("unchecked")
+	public <T> InterfaceSupplier<T> getInterfaceSupplierOrDefault(Class<T> clazz) {
+		return (InterfaceSupplier<T>)interfaceSupplierMap.getOrDefault(clazz, defaultInterfaceSupplier);
 	}
 
 	public boolean isNonNullAnnotation(Annotation annotation) {
@@ -193,10 +209,12 @@ public final class ArbitraryOption {
 
 		private final Map<Class<?>, AnnotatedArbitraryGenerator<?>> annotatedArbitraryMap = new HashMap<>(
 			DEFAULT_TYPE_ARBITRARY_SPECS);
+		private final Map<Class<?>, InterfaceSupplier<?>> interfaceSupplierMap = new HashMap<>();
 		private Set<String> exceptGeneratePackages = new HashSet<>(DEFAULT_EXCEPT_GENERATE_PACKAGE);
 		private final Set<String> nonNullAnnotationNames = new HashSet<>(DEFAULT_NONNULL_ANNOTATIONS);
 		private NullableArbitraryEvaluator nullableArbitraryEvaluator = new NullableArbitraryEvaluator() {
 		};
+		private InterfaceSupplier<?> defaultInterfaceSupplier = () -> null;
 		private double nullInject = 0.2;
 		private boolean nullableContainer = false;
 
@@ -207,6 +225,16 @@ public final class ArbitraryOption {
 
 		public FixtureOptionsBuilder exceptGeneratePackages(Set<String> exceptGeneratePackages) {
 			this.exceptGeneratePackages = exceptGeneratePackages;
+			return this;
+		}
+
+		public FixtureOptionsBuilder addInterfaceSupplier(Class<?> clazz, InterfaceSupplier<?> interfaceSupplier) {
+			this.interfaceSupplierMap.put(clazz, interfaceSupplier);
+			return this;
+		}
+
+		public FixtureOptionsBuilder defaultInterfaceSupplier(InterfaceSupplier<?> interfaceSupplier) {
+			this.defaultInterfaceSupplier = interfaceSupplier;
 			return this;
 		}
 
@@ -240,8 +268,10 @@ public final class ArbitraryOption {
 		public ArbitraryOption build() {
 			return new ArbitraryOption(
 				Collections.unmodifiableMap(annotatedArbitraryMap),
+				Collections.unmodifiableMap(interfaceSupplierMap),
 				Collections.unmodifiableSet(exceptGeneratePackages),
 				Collections.unmodifiableSet(nonNullAnnotationNames),
+				defaultInterfaceSupplier,
 				nullableArbitraryEvaluator,
 				nullInject,
 				nullableContainer

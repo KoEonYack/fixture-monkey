@@ -82,6 +82,16 @@ public final class NullArbitraryType extends ArbitraryType {
 	}
 
 	@Override
+	public boolean isInterface() {
+		return false;
+	}
+
+	@Override
+	public boolean isAbstract() {
+		return false;
+	}
+
+	@Override
 	public Class<?> getType() {
 		return null;
 	}

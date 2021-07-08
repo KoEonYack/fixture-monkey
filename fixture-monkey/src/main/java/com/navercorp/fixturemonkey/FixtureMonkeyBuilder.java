@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.navercorp.fixturemonkey.ArbitraryOption.FixtureOptionsBuilder;
+import com.navercorp.fixturemonkey.arbitrary.InterfaceSupplier;
 import com.navercorp.fixturemonkey.arbitrary.NullableArbitraryEvaluator;
 import com.navercorp.fixturemonkey.customizer.ArbitraryCustomizer;
 import com.navercorp.fixturemonkey.customizer.ArbitraryCustomizers;
@@ -78,6 +79,16 @@ public class FixtureMonkeyBuilder {
 
 	public FixtureMonkeyBuilder nullableContainer(boolean nullableContainer) {
 		this.optionsBuilder.nullableContainer(nullableContainer);
+		return this;
+	}
+
+	public <T> FixtureMonkeyBuilder defaultInterfaceSupplier(InterfaceSupplier<T> interfaceSupplier) {
+		this.optionsBuilder.defaultInterfaceSupplier(interfaceSupplier);
+		return this;
+	}
+
+	public <T> FixtureMonkeyBuilder addInterfaceSupplier(Class<T> clazz, InterfaceSupplier<T> interfaceSupplier) {
+		this.optionsBuilder.addInterfaceSupplier(clazz, interfaceSupplier);
 		return this;
 	}
 
