@@ -111,6 +111,11 @@ public class FixtureMonkeyBuilder {
 		return this;
 	}
 
+	public FixtureMonkeyBuilder defaultNotNull(boolean defaultNotNull) {
+		this.optionsBuilder.defaultNotNull(defaultNotNull);
+		return this;
+	}
+
 	public FixtureMonkey build() {
 		if (options == null) {
 			this.options = optionsBuilder.build();

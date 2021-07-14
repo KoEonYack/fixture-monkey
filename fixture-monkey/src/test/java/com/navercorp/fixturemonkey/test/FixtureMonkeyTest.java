@@ -1545,6 +1545,41 @@ class FixtureMonkeyTest {
 		then(actual.value).isNull();
 	}
 
+	@Property
+	void defaultNullInject() {
+		FixtureMonkey sut = FixtureMonkey.builder()
+			.nullInject(1.0d)
+			.build();
+
+		StringWrapperClass actual = sut.giveMeOne(StringWrapperClass.class);
+
+		then(actual.value).isNull();
+	}
+
+	@Property
+	void defaultNullInjectWithDefaultNotNull() {
+		FixtureMonkey sut = FixtureMonkey.builder()
+			.nullInject(1.0d)
+			.defaultNotNull(true)
+			.build();
+
+		StringWrapperClass actual = sut.giveMeOne(StringWrapperClass.class);
+
+		then(actual.value).isNotNull();
+	}
+
+	@Property
+	void giveMeNullableDefaultNullInjectWithDefaultNotNull() {
+		FixtureMonkey sut = FixtureMonkey.builder()
+			.nullInject(1.0d)
+			.defaultNotNull(true)
+			.build();
+
+		StringWrapperWithNullableClass actual = sut.giveMeOne(StringWrapperWithNullableClass.class);
+
+		then(actual.value).isNull();
+	}
+
 	@Data
 	public static class IntegerWrapperClass {
 		int value;
@@ -1740,5 +1775,11 @@ class FixtureMonkeyTest {
 	@Data
 	public static class InterfaceWrapper {
 		MockInterface value;
+	}
+
+	@Data
+	public static class StringWrapperWithNullableClass {
+		@Nullable
+		String value;
 	}
 }

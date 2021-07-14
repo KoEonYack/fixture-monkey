@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotEmpty;
 
 import org.junit.platform.commons.util.ReflectionUtils;
@@ -55,7 +56,8 @@ public final class ArbitraryTraverser {
 			for (Field field : fields) {
 				ArbitraryType arbitraryType = getFixtureType(field);
 				double nullInject = arbitraryOption.getNullInject();
-				boolean nullable = isNullableField(field);
+				boolean defaultNotNull = arbitraryOption.isDefaultNotNull();
+				boolean nullable = isNullableField(field, defaultNotNull);
 				Object nextValue;
 				if (value != null) {
 					nextValue = extractValue(value, field);
@@ -131,7 +133,7 @@ public final class ArbitraryTraverser {
 	}
 
 	@SuppressWarnings({"rawtypes", "unchecked"})
-	private boolean isNullableField(Field field) {
+	private boolean isNullableField(Field field, boolean defaultNotNull) {
 		ArbitraryType arbitraryType = getFixtureType(field);
 		boolean nullable = arbitraryOption.getNullableArbitraryEvaluator().isNullable(field);
 		if (arbitraryType.isContainer()) {
@@ -141,12 +143,21 @@ public final class ArbitraryTraverser {
 		} else if (arbitraryType.getAnnotation(NotEmpty.class) != null) {
 			return false;
 		} else {
+			if (arbitraryType.getAnnotation(Nullable.class) != null) {
+				return true;
+			}
 			if (!nullable) {
 				return false;
 			}
 
-			return arbitraryType.getAnnotations().stream()
+			boolean hasNotNullAnnotations = arbitraryType.getAnnotations().stream()
 				.noneMatch(it -> arbitraryOption.isNonNullAnnotation((Annotation)it));
+
+			if (!hasNotNullAnnotations) {
+				return false;
+			}
+
+			return !defaultNotNull;
 		}
 	}
 

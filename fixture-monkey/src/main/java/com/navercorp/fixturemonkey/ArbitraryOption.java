@@ -65,6 +65,7 @@ public final class ArbitraryOption {
 	private final InterfaceSupplier<?> defaultInterfaceSupplier;
 	private final double nullInject;
 	private final boolean nullableContainer;
+	private final boolean defaultNotNull;
 
 	public ArbitraryOption(
 		Map<Class<?>, AnnotatedArbitraryGenerator<?>> annotatedArbitraryMap,
@@ -74,7 +75,8 @@ public final class ArbitraryOption {
 		InterfaceSupplier<?> defaultInterfaceSupplier,
 		NullableArbitraryEvaluator nullableArbitraryEvaluator,
 		double nullInject,
-		boolean nullableContainer
+		boolean nullableContainer,
+		boolean defaultNotNull
 	) {
 		this.annotatedArbitraryMap = annotatedArbitraryMap;
 		this.interfaceSupplierMap = interfaceSupplierMap;
@@ -84,6 +86,7 @@ public final class ArbitraryOption {
 		this.nullableArbitraryEvaluator = nullableArbitraryEvaluator;
 		this.nullInject = nullInject;
 		this.nullableContainer = nullableContainer;
+		this.defaultNotNull = defaultNotNull;
 	}
 
 	public Set<String> getExceptGeneratePackages() {
@@ -130,6 +133,10 @@ public final class ArbitraryOption {
 
 	public boolean isNonNullAnnotation(Annotation annotation) {
 		return nonNullAnnotationNames.contains(annotation.annotationType().getName());
+	}
+
+	public boolean isDefaultNotNull() {
+		return defaultNotNull;
 	}
 
 	public static FixtureOptionsBuilder builder() {
@@ -217,6 +224,7 @@ public final class ArbitraryOption {
 		private InterfaceSupplier<?> defaultInterfaceSupplier = () -> null;
 		private double nullInject = 0.2;
 		private boolean nullableContainer = false;
+		private boolean defaultNotNull = false;
 
 		public FixtureOptionsBuilder addExceptGeneratePackage(String exceptGeneratePackage) {
 			this.exceptGeneratePackages.add(exceptGeneratePackage);
@@ -265,6 +273,11 @@ public final class ArbitraryOption {
 			return this;
 		}
 
+		public FixtureOptionsBuilder defaultNotNull(boolean defaultNotNull) {
+			this.defaultNotNull = defaultNotNull;
+			return this;
+		}
+
 		public ArbitraryOption build() {
 			return new ArbitraryOption(
 				Collections.unmodifiableMap(annotatedArbitraryMap),
@@ -274,7 +287,8 @@ public final class ArbitraryOption {
 				defaultInterfaceSupplier,
 				nullableArbitraryEvaluator,
 				nullInject,
-				nullableContainer
+				nullableContainer,
+				defaultNotNull
 			);
 		}
 	}
