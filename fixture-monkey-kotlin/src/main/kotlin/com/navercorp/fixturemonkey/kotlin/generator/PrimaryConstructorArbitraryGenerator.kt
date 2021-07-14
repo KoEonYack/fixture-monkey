@@ -1,0 +1,65 @@
+package com.navercorp.fixturemonkey.kotlin.generator
+
+import com.navercorp.fixturemonkey.arbitrary.ArbitraryNode
+import com.navercorp.fixturemonkey.arbitrary.ArbitraryType
+import com.navercorp.fixturemonkey.customizer.ArbitraryCustomizers
+import com.navercorp.fixturemonkey.customizer.WithFixtureCustomizer
+import com.navercorp.fixturemonkey.generator.AbstractArbitraryGenerator
+import com.navercorp.fixturemonkey.generator.ArbitraryGenerator
+import com.navercorp.fixturemonkey.generator.FieldArbitraries
+import net.jqwik.api.Arbitrary
+import net.jqwik.api.Combinators
+import kotlin.jvm.internal.Reflection
+import kotlin.reflect.KClass
+import kotlin.reflect.KParameter
+import kotlin.reflect.full.primaryConstructor
+
+class PrimaryConstructorArbitraryGenerator(
+    private val arbitraryCustomizers: ArbitraryCustomizers = ArbitraryCustomizers()
+) : AbstractArbitraryGenerator(), WithFixtureCustomizer {
+
+    companion object {
+        val INSTANCE = PrimaryConstructorArbitraryGenerator()
+    }
+
+    override fun <T : Any> generateObject(
+        arbitraryType: ArbitraryType<*>,
+        nodes: List<ArbitraryNode<*>>
+    ): Arbitrary<T> {
+        @Suppress("UNCHECKED_CAST")
+        val clazz = Reflection.createKotlinClass(arbitraryType.type) as KClass<T>
+
+        val fieldArbitraries = FieldArbitraries(
+            toArbitrariesByFieldName(nodes, { it.fieldName }) { _, arbitrary -> arbitrary }
+        )
+
+        arbitraryCustomizers.customizeFields(clazz.java, fieldArbitraries)
+
+        val constructor = requireNotNull(clazz.primaryConstructor) { "No primary constructor provided for $clazz" }
+
+        var builderCombinator = Combinators.withBuilder { mutableMapOf<KParameter, Any?>() }
+        for (parameter in constructor.parameters) {
+            val parameterArbitrary = fieldArbitraries.getArbitrary(parameter.name)
+            builderCombinator = builderCombinator.use(parameterArbitrary).`in` { map, value ->
+                map.apply {
+                    this[parameter] = value
+                }
+            }
+        }
+
+        return builderCombinator.build { map ->
+            val parameters = map.values.toTypedArray()
+            constructor.call(*parameters).let {
+                arbitraryCustomizers.customizeFixture(clazz.java, it)
+            }
+        }
+    }
+
+    override fun withFixtureCustomizers(arbitraryCustomizers: ArbitraryCustomizers): ArbitraryGenerator {
+        return if (this.arbitraryCustomizers === arbitraryCustomizers) {
+            this
+        } else {
+            PrimaryConstructorArbitraryGenerator(arbitraryCustomizers)
+        }
+    }
+}
