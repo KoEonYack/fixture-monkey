@@ -1580,6 +1580,26 @@ class FixtureMonkeyTest {
 		then(actual.value).isNull();
 	}
 
+	@Property
+	void giveMeSetArbitraryBuilder() {
+		StringIntegerClass actual = this.sut.giveMeBuilder(StringIntegerClass.class)
+			.setBuilder("value2", this.sut.giveMeBuilder(IntegerWrapperClass.class).set("value", 1))
+			.sample();
+
+		then(actual.value2.value).isEqualTo(1);
+	}
+
+	@Property
+	void giveMeSpecSetArbitraryBuilder() {
+		StringIntegerClass actual = this.sut.giveMeBuilder(StringIntegerClass.class)
+			.spec(new ExpressionSpec().setBuilder("value2",
+				this.sut.giveMeBuilder(IntegerWrapperClass.class).set("value", 1))
+			)
+			.sample();
+
+		then(actual.value2.value).isEqualTo(1);
+	}
+
 	@Data
 	public static class IntegerWrapperClass {
 		int value;

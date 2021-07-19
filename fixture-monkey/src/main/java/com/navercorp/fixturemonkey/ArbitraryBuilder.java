@@ -290,6 +290,24 @@ public final class ArbitraryBuilder<T> {
 		return this;
 	}
 
+	public ArbitraryBuilder<T> setBuilder(String expression, @Nullable ArbitraryBuilder<?> builder, long limit) {
+		if (builder == null) {
+			return this.setNull(expression);
+		}
+		ArbitraryExpression arbitraryExpression = ArbitraryExpression.from(expression);
+		this.builderManipulators.add(new ArbitrarySetArbitrary<>(arbitraryExpression, builder.build(), limit));
+		return this;
+	}
+
+	public ArbitraryBuilder<T> setBuilder(String expression, @Nullable ArbitraryBuilder<?> builder) {
+		if (builder == null) {
+			return this.setNull(expression);
+		}
+		ArbitraryExpression arbitraryExpression = ArbitraryExpression.from(expression);
+		this.builderManipulators.add(new ArbitrarySetArbitrary<>(arbitraryExpression, builder.build()));
+		return this;
+	}
+
 	public <U> ArbitraryBuilder<T> setPostCondition(String expression, Class<U> clazz, Predicate<U> filter,
 		long limit) {
 		ArbitraryExpression arbitraryExpression = ArbitraryExpression.from(expression);
