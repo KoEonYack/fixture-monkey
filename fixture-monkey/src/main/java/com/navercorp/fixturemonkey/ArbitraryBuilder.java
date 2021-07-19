@@ -21,6 +21,8 @@ import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 import net.jqwik.api.Arbitrary;
+import net.jqwik.api.Combinators.F3;
+import net.jqwik.api.Combinators.F4;
 
 import com.navercorp.fixturemonkey.arbitrary.AbstractArbitrarySet;
 import com.navercorp.fixturemonkey.arbitrary.ArbitraryExpression;
@@ -460,17 +462,68 @@ public final class ArbitraryBuilder<T> {
 		ArbitraryBuilder<U> other,
 		BiFunction<T, U, R> combinator
 	) {
-		ArbitraryBuilder<T> copied = this.copy();
-		ArbitraryBuilder<U> copiedOther = other.copy();
-
-		Supplier<R> result = () -> {
-			Arbitrary<T> sample = copied.build();
-			Arbitrary<U> otherSample = copiedOther.build();
+		return new ArbitraryBuilder<>(() -> {
+			Arbitrary<T> sample = this.build();
+			Arbitrary<U> otherSample = other.build();
 			return combinator.apply(sample.sample(), otherSample.sample());
-		};
+		},
+			this.traverser,
+			this.generator,
+			this.validator,
+			this.arbitraryCustomizers,
+			this.generatorMap
+		);
+	}
 
-		return new ArbitraryBuilder<>(
-			result,
+	public <U, V, R> ArbitraryBuilder<R> zipWith(
+		ArbitraryBuilder<U> other,
+		ArbitraryBuilder<V> another,
+		F3<T, U, V, R> combinator
+	) {
+		return new ArbitraryBuilder<>(() -> combinator.apply(
+			this.sample(),
+			other.sample(),
+			another.sample()
+		),
+			this.traverser,
+			this.generator,
+			this.validator,
+			this.arbitraryCustomizers,
+			this.generatorMap);
+	}
+
+	public <U, V, W, R> ArbitraryBuilder<R> zipWith(
+		ArbitraryBuilder<U> other,
+		ArbitraryBuilder<V> another,
+		ArbitraryBuilder<W> theOther,
+		F4<T, U, V, W, R> combinator
+	) {
+		return new ArbitraryBuilder<>(() -> combinator.apply(
+			this.sample(),
+			other.sample(),
+			another.sample(),
+			theOther.sample()
+		),
+			this.traverser,
+			this.generator,
+			this.validator,
+			this.arbitraryCustomizers,
+			this.generatorMap);
+	}
+
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	public <U> ArbitraryBuilder<U> zipWith(
+		List<ArbitraryBuilder<?>> others,
+		Function<List<?>, U> combinator
+	) {
+		return new ArbitraryBuilder<>(() -> {
+			List combinedList = new ArrayList<>();
+			combinedList.add(this.sample());
+			for (ArbitraryBuilder<?> other : others) {
+				combinedList.add(other.sample());
+			}
+			return combinator.apply(combinedList);
+		},
 			this.traverser,
 			this.generator,
 			this.validator,
