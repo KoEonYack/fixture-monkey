@@ -15,6 +15,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 
 import org.junit.platform.commons.util.ReflectionUtils;
@@ -140,7 +141,9 @@ public final class ArbitraryTraverser {
 			return nullable && arbitraryOption.isNullableContainer();
 		} else if (arbitraryType.isPrimitive()) {
 			return false;
-		} else if (arbitraryType.getAnnotation(NotEmpty.class) != null) {
+		} else if (arbitraryType.getAnnotation(NotEmpty.class) != null
+			|| (field.getType() == String.class && arbitraryType.getAnnotation(NotBlank.class) != null)
+		) {
 			return false;
 		} else {
 			if (arbitraryType.getAnnotation(Nullable.class) != null) {
