@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Positive;
 
@@ -1746,6 +1747,17 @@ class FixtureMonkeyTest {
 		then(actual.values.get(3).value).isEqualTo("s4");
 	}
 
+	@Property
+	void giveMeNotBlankString() {
+		FixtureMonkey sut = FixtureMonkey.builder()
+			.nullInject(1.0)
+			.build();
+
+		StringWrapperWithNotBlankClass actual = sut.giveMeOne(StringWrapperWithNotBlankClass.class);
+
+		then(actual.value).isNotNull();
+	}
+
 	@Data
 	public static class IntegerWrapperClass {
 		int value;
@@ -1946,6 +1958,12 @@ class FixtureMonkeyTest {
 	@Data
 	public static class StringWrapperWithNullableClass {
 		@Nullable
+		String value;
+	}
+
+	@Data
+	public static class StringWrapperWithNotBlankClass {
+		@NotBlank
 		String value;
 	}
 }
