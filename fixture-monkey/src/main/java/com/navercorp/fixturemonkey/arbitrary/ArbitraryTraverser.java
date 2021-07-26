@@ -239,7 +239,7 @@ public final class ArbitraryTraverser {
 						.indexOfIterable(currentIndex)
 						.build();
 					currentNode.addChildNode(nextNode);
-					doTraverse(nextNode, false, decompose, fieldNameResolver);
+					doTraverse(nextNode, false, true, fieldNameResolver);
 					currentIndex++;
 				}
 
@@ -265,7 +265,7 @@ public final class ArbitraryTraverser {
 						.indexOfIterable(0)
 						.build();
 					currentNode.addChildNode(nextNode);
-					doTraverse(nextNode, false, decompose, fieldNameResolver);
+					doTraverse(nextNode, false, true, fieldNameResolver);
 					return;
 				}
 			}
@@ -286,7 +286,7 @@ public final class ArbitraryTraverser {
 				.build();
 
 			currentNode.addChildNode(genericFrame);
-			doTraverse(genericFrame, false, decompose, fieldNameResolver);
+			doTraverse(genericFrame, false, false, fieldNameResolver);
 		}
 	}
 
@@ -326,7 +326,7 @@ public final class ArbitraryTraverser {
 					.valueSupplier(() -> nextValue)
 					.build();
 				currentNode.addChildNode(nextNode);
-				doTraverse(nextNode, false, decompose, fieldNameResolver);
+				doTraverse(nextNode, false, true, fieldNameResolver);
 			}
 
 			if (containerSizeConstraint == null) {
@@ -350,7 +350,7 @@ public final class ArbitraryTraverser {
 				.build();
 
 			currentNode.addChildNode(genericFrame);
-			doTraverse(genericFrame, false, decompose, fieldNameResolver);
+			doTraverse(genericFrame, false, false, fieldNameResolver);
 		}
 	}
 

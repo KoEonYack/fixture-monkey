@@ -1758,6 +1758,20 @@ class FixtureMonkeyTest {
 		then(actual.value).isNotNull();
 	}
 
+	@Property
+	void mapIntegerListClassBiggerThanMapped() {
+		IntegerListClass mapped = sut.giveMeBuilder(IntegerListClass.class)
+			.size("values", 1)
+			.sample();
+
+		IntegerListClass actual = sut.giveMeBuilder(mapped)
+			.size("values", 2)
+			.sample();
+
+		then(actual.values).hasSize(2);
+		then(actual.values.get(1)).isNotNull();
+	}
+
 	@Data
 	public static class IntegerWrapperClass {
 		int value;
