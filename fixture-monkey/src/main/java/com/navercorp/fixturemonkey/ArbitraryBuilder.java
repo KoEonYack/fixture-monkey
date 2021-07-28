@@ -91,7 +91,7 @@ public final class ArbitraryBuilder<T> {
 		this(
 			ArbitraryNode.builder()
 				.type(new ArbitraryType(value.getClass()))
-				.valueSupplier(() -> value)
+				.value(() -> value)
 				.fieldName("HEAD_NAME")
 				.build(),
 			traverser,
@@ -113,7 +113,7 @@ public final class ArbitraryBuilder<T> {
 	) {
 		this(
 			ArbitraryNode.<T>builder()
-				.valueSupplier(valueSupplier)
+				.value(valueSupplier)
 				.fieldName("HEAD_NAME")
 				.build(),
 			traverser,
@@ -134,7 +134,7 @@ public final class ArbitraryBuilder<T> {
 		Map<Class<?>, ArbitraryGenerator> generatorMap
 	) {
 		this(
-			new ArbitraryTree<>(() -> node),
+			new ArbitraryTree<>(node),
 			traverser,
 			generator,
 			validator,
@@ -361,26 +361,16 @@ public final class ArbitraryBuilder<T> {
 	}
 
 	public ArbitraryBuilder<T> apply(BiConsumer<T, ArbitraryBuilder<T>> mapper) {
-		return new ArbitraryBuilder<>(() -> {
-			T sample = this.sample();
-			ArbitraryBuilder<T> newArbitraryBuilder = new ArbitraryBuilder<>(
-				sample,
-				this.traverser,
-				this.generator,
-				this.validator,
-				this.arbitraryCustomizers,
-				this.generatorMap
-			);
-			mapper.accept(sample, newArbitraryBuilder);
-			return newArbitraryBuilder.sample();
-		},
-			this.traverser,
-			this.generator,
-			this.validator,
-			this.arbitraryCustomizers,
-			this.generatorMap
-		);
+		ArbitraryBuilder<T> copied = this.copy();
 
+		this.tree.getHead().setValue(() -> {
+			T sample = copied.sample();
+			copied.tree.getHead().setValue(() -> sample);
+			mapper.accept(sample, copied);
+			return copied.sample();
+		});
+
+		return this;
 	}
 
 	@SuppressWarnings({"rawtypes", "unchecked"})

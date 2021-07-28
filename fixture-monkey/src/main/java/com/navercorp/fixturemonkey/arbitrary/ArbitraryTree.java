@@ -14,11 +14,10 @@ import com.navercorp.fixturemonkey.generator.ArbitraryGenerator;
 import com.navercorp.fixturemonkey.validator.ArbitraryValidator;
 
 public final class ArbitraryTree<T> {
-	private final Supplier<ArbitraryNode<T>> headSupplier;
 	private ArbitraryNode<T> head;
 
-	public ArbitraryTree(Supplier<ArbitraryNode<T>> headSupplier) {
-		this.headSupplier = headSupplier;
+	public ArbitraryTree(ArbitraryNode<T> head) {
+		this.head = head;
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -74,9 +73,6 @@ public final class ArbitraryTree<T> {
 	}
 
 	public ArbitraryNode<T> getHead() {
-		if (head == null) {
-			head = headSupplier.get();
-		}
 		return head;
 	}
 
@@ -98,6 +94,6 @@ public final class ArbitraryTree<T> {
 	}
 
 	public ArbitraryTree<T> copy() {
-		return new ArbitraryTree<>(() -> this.getHead().copy());
+		return new ArbitraryTree<>(this.getHead().copy());
 	}
 }
