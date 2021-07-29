@@ -30,6 +30,10 @@ public class LazyValue<T> {
 		return value;
 	}
 
+	public boolean isEmpty() {
+		return get() == null;
+	}
+
 	public void clear() {
 		this.value = null;
 	}
