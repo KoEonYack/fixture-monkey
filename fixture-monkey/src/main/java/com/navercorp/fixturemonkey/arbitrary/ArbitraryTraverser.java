@@ -103,7 +103,7 @@ public final class ArbitraryTraverser {
 			} else if (nowNodeType.isInterface() || nowNodeType.isAbstract()) {
 				InterfaceSupplier interfaceSupplier =
 					arbitraryOption.getInterfaceSupplierOrDefault(nowNodeType.getType());
-				node.setArbitrary(Arbitraries.just((T)interfaceSupplier.get()));
+				node.setArbitrary(Arbitraries.just((T)interfaceSupplier.get(nowNodeType.getType())));
 			} else {
 				node.setArbitrary(Arbitraries.just(null));
 			}

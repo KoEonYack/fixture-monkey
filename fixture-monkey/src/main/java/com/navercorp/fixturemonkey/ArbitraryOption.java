@@ -221,7 +221,7 @@ public final class ArbitraryOption {
 		private final Set<String> nonNullAnnotationNames = new HashSet<>(DEFAULT_NONNULL_ANNOTATIONS);
 		private NullableArbitraryEvaluator nullableArbitraryEvaluator = new NullableArbitraryEvaluator() {
 		};
-		private InterfaceSupplier<?> defaultInterfaceSupplier = () -> null;
+		private InterfaceSupplier<?> defaultInterfaceSupplier = (type) -> null;
 		private double nullInject = 0.2;
 		private boolean nullableContainer = false;
 		private boolean defaultNotNull = false;

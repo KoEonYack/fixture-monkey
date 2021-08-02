@@ -61,7 +61,7 @@ class FixtureMonkeyTest {
 		.putGenerator(FieldReflectionIntegerClass.class, FieldReflectionArbitraryGenerator.INSTANCE)
 		.putGenerator(NullIntegerClass.class, NullArbitraryGenerator.INSTANCE)
 		.putGenerator(BeanIntegerClass.class, BeanArbitraryGenerator.INSTANCE)
-		.addInterfaceSupplier(MockInterface.class, () -> () -> "test")
+		.addInterfaceSupplier(MockInterface.class, (type) -> () -> "test")
 		.build();
 
 	@Property
