@@ -21,7 +21,7 @@ import net.jqwik.api.Arbitrary;
 import com.navercorp.fixturemonkey.TypeSupports;
 
 public final class ArbitraryNode<T> {
-	private static final String HEAD_NAME = "HEAD";
+	private static final String HEAD_NAME = "HEAD_NAME";
 
 	@SuppressWarnings("rawtypes")
 	private final List<ArbitraryNode> children;
@@ -284,6 +284,10 @@ public final class ArbitraryNode<T> {
 
 	public boolean isLeafNode() {
 		return this.getChildren().isEmpty() && this.getArbitrary() != null;
+	}
+
+	public boolean isHead() {
+		return this.getFieldName().equals(HEAD_NAME);
 	}
 
 	public LazyValue<T> getValue() {

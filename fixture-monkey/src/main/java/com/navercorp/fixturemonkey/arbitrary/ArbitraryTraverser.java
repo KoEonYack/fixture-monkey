@@ -20,6 +20,7 @@ import org.junit.platform.commons.util.ReflectionUtils;
 import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
 
+import com.navercorp.fixturemonkey.ArbitraryBuilder;
 import com.navercorp.fixturemonkey.ArbitraryOption;
 import com.navercorp.fixturemonkey.generator.AnnotatedArbitraryGenerator;
 import com.navercorp.fixturemonkey.generator.AnnotationSource;
@@ -49,6 +50,7 @@ public final class ArbitraryTraverser {
 		FieldNameResolver fieldNameResolver
 	) {
 		node.getChildren().clear();
+		initializeDefaultArbitrary(node);
 		LazyValue<T> nowValue = node.getValue();
 		ArbitraryType<T> nowNodeType = node.getType();
 		Class<?> clazz = nowNodeType.getType();
@@ -116,6 +118,17 @@ public final class ArbitraryTraverser {
 			return null;
 		}
 		return currentValue.isEmpty() ? null : new LazyValue<>(extractValue(currentValue.get(), field));
+	}
+
+	@SuppressWarnings("unchecked")
+	private <T> void initializeDefaultArbitrary(ArbitraryNode<T> node) {
+		Class<?> clazz = node.getType().getType();
+		ArbitraryBuilder<?> defaultArbitraryBuilder = arbitraryOption.getDefaultArbitraryBuilder(clazz);
+
+		if (defaultArbitraryBuilder != null && !node.isHead()) {
+			node.setValue(() -> (T)defaultArbitraryBuilder.sample());
+			node.setManipulated(true); // TODO: decompose 정책 수정 후 제거
+		}
 	}
 
 	private List<Field> getFields(Class<?> clazz) {
