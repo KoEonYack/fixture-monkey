@@ -20,6 +20,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import com.navercorp.fixturemonkey.ArbitraryBuilder;
+import com.navercorp.fixturemonkey.FixtureMonkey;
 import com.navercorp.fixturemonkey.autoparams.customization.FixtureMonkeyCustomizer;
 
 class FixtureMonkeyValueCustomizerTest {
@@ -119,6 +120,20 @@ class FixtureMonkeyValueCustomizerTest {
 		then(arbitrary.sample().getValue()).isNotNull();
 	}
 
+	@ParameterizedTest
+	@AutoSource
+	@Customization(FixtureMonkeyCustomizer.class)
+	void sutAlwaysGeneratesSameFixtureMonkeyInstances(FixtureMonkey fixture1, FixtureMonkey fixture2) {
+		then(fixture1).isSameAs(fixture2);
+	}
+
+	@ParameterizedTest
+	@AutoSource
+	@Customization(FixtureMonkeyTestableCustomizer.class)
+	void sutGeneratesFixtureMonkeySameAsThatInFixtureMonkeyCustomizer(FixtureMonkey fixture) {
+		then(fixture).isSameAs(FixtureMonkeyTestableCustomizer.getFixtureMonkey());
+	}
+
 	@Data
 	public static class IntegerWrapperClass {
 		@Positive
@@ -136,5 +151,17 @@ class FixtureMonkeyValueCustomizerTest {
 	public static class StringWrapperClass {
 		@NotNull
 		private String value;
+	}
+
+	public static class FixtureMonkeyTestableCustomizer extends FixtureMonkeyCustomizer {
+		private static final FixtureMonkey fixtureMonkey = FixtureMonkey.builder().build();
+
+		public FixtureMonkeyTestableCustomizer() {
+			super(fixtureMonkey);
+		}
+
+		public static FixtureMonkey getFixtureMonkey() {
+			return fixtureMonkey;
+		}
 	}
 }

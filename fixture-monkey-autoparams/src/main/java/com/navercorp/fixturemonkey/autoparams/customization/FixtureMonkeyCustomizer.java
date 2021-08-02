@@ -13,7 +13,8 @@ public class FixtureMonkeyCustomizer extends CompositeCustomizer {
 		super(
 			new FixtureMonkeyValueCustomizer(fixtureMonkey),
 			new FixtureMonkeyArbitraryCustomizer(fixtureMonkey),
-			new FixtureMonkeyArbitraryBuilderCustomizer(fixtureMonkey)
+			new FixtureMonkeyArbitraryBuilderCustomizer(fixtureMonkey),
+			new FixtureMonkeyItselfCustomizer(fixtureMonkey)
 		);
 	}
 }
