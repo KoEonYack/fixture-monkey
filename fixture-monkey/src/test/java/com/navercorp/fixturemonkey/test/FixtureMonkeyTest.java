@@ -1772,6 +1772,35 @@ class FixtureMonkeyTest {
 		then(actual.values.get(1)).isNotNull();
 	}
 
+	@Property
+	void decomposeNullIsNotGenerated() {
+		StringIntegerClass decomposed = new StringIntegerClass();
+		IntegerWrapperClass value2 = new IntegerWrapperClass();
+		value2.value = 1;
+		decomposed.setValue2(value2);
+
+		StringIntegerClass actual = this.sut.giveMeBuilder(decomposed)
+			.sample();
+
+		then(actual.value1).isNull();
+		then(actual.value2.value).isEqualTo(1);
+	}
+
+	@Property
+	void decomposeNullSetThenGenerate() {
+		StringIntegerClass decomposed = new StringIntegerClass();
+		IntegerWrapperClass value2 = new IntegerWrapperClass();
+		value2.value = 1;
+		decomposed.setValue2(value2);
+
+		StringIntegerClass actual = this.sut.giveMeBuilder(decomposed)
+			.set("value1.value", "abc")
+			.sample();
+
+		then(actual.value1.value).isEqualTo("abc");
+		then(actual.value2.value).isEqualTo(1);
+	}
+
 	@Data
 	public static class IntegerWrapperClass {
 		int value;

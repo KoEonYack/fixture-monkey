@@ -561,6 +561,11 @@ public final class ArbitraryNode<T> {
 			return this;
 		}
 
+		public FixtureNodeBuilder<T> active(boolean active) {
+			this.status.active = active;
+			return this;
+		}
+
 		public ArbitraryNode<T> build() {
 			return new ArbitraryNode<>(
 				children,
