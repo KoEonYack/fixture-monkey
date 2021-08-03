@@ -86,7 +86,7 @@ public final class ArbitraryTraverser {
 			if (nowNodeType.isMap() || nowNodeType.isMapEntry()) {
 				mapArbitrary(node, fieldNameResolver);
 			} else if (nowNodeType.isArray()) {
-				arrayArbitrary(node, fieldNameResolver);
+				traverseContainer(node, active, fieldNameResolver, ArrayArbitraryNodeGenerator.INSTANCE);
 			} else if (nowNodeType.isOptional()) {
 				traverseContainer(node, active, fieldNameResolver, OptionalArbitraryNodeGenerator.INSTANCE);
 			} else {
@@ -209,67 +209,6 @@ public final class ArbitraryTraverser {
 		return (Arbitrary<T>)Optional.ofNullable(annotatedArbitraryMap.get(clazz))
 			.map(arbitraryGenerator -> arbitraryGenerator.generate(annotationSource))
 			.orElseThrow(() -> new IllegalArgumentException("Class is not registered " + clazz.getName()));
-	}
-
-	@SuppressWarnings("unchecked")
-	private <T, U> void arrayArbitrary(ArbitraryNode<T> currentNode, FieldNameResolver fieldNameResolver) {
-		ArbitraryType<T> clazz = currentNode.getType();
-		String fieldName = currentNode.getFieldName();
-
-		ArbitraryType<U> childType = clazz.getArrayFixtureType();
-
-		LazyValue<T> lazyValue = currentNode.getValue();
-		ContainerSizeConstraint containerSizeConstraint = currentNode.getContainerSizeConstraint();
-		int elementSize = Integer.MAX_VALUE;
-		int currentIndex = 0;
-
-		if (lazyValue != null) {
-			T value = lazyValue.get();
-			if (value == null) {
-				currentNode.setArbitrary(Arbitraries.just(null));
-				return;
-			}
-			int length = Array.getLength(value);
-
-			if (containerSizeConstraint != null) {
-				elementSize = containerSizeConstraint.getArbitraryElementSize();
-			}
-
-			for (currentIndex = 0; currentIndex < length && currentIndex < elementSize; currentIndex++) {
-				U nextValue = (U)Array.get(value, currentIndex);
-				ArbitraryNode<U> nextNode = ArbitraryNode.<U>builder()
-					.type(childType)
-					.fieldName(fieldName)
-					.indexOfIterable(currentIndex)
-					.value(nextValue)
-					.build();
-				currentNode.addChildNode(nextNode);
-				doTraverse(nextNode, false, true, fieldNameResolver);
-			}
-
-			if (containerSizeConstraint == null) {
-				currentNode.setContainerSizeConstraint(new ContainerSizeConstraint(length, length));
-				return;
-			}
-		}
-
-		currentNode.initializeElementSize();
-		if (elementSize == Integer.MAX_VALUE) {
-			elementSize = containerSizeConstraint.getArbitraryElementSize();
-		}
-
-		for (int i = currentIndex; i < elementSize; i++) {
-			ArbitraryNode<U> genericFrame = ArbitraryNode.<U>builder()
-				.type(childType)
-				.fieldName(fieldName)
-				.indexOfIterable(i)
-				.nullable(false)
-				.nullInject(0.f)
-				.build();
-
-			currentNode.addChildNode(genericFrame);
-			doTraverse(genericFrame, false, true, fieldNameResolver);
-		}
 	}
 
 	private <T, K, V> void mapArbitrary(ArbitraryNode<T> currentNode, FieldNameResolver fieldNameResolver) {
