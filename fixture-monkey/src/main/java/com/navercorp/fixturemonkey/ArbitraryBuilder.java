@@ -205,28 +205,18 @@ public final class ArbitraryBuilder<T> {
 	}
 
 	public ArbitraryBuilder<T> acceptIf(Predicate<T> predicate, Consumer<ArbitraryBuilder<T>> self) {
-		return new ArbitraryBuilder<>(() -> {
-			T sample = this.sample();
+		ArbitraryBuilder<T> copied = this.copy();
+
+		tree.getHead().setValue(() -> {
+			T sample = copied.sample();
 			if (predicate.test(sample)) {
-				ArbitraryBuilder<T> newArbitraryBuilder = new ArbitraryBuilder<>(
-					sample,
-					this.traverser,
-					this.generator,
-					this.validator,
-					this.arbitraryCustomizers,
-					this.generatorMap
-				);
-				self.accept(newArbitraryBuilder);
-				return newArbitraryBuilder.sample();
+				self.accept(copied);
+				return copied.sample();
 			}
 			return sample;
-		},
-			this.traverser,
-			this.generator,
-			this.validator,
-			this.arbitraryCustomizers,
-			this.generatorMap
-		);
+		});
+
+		return this;
 	}
 
 	public ArbitraryBuilder<T> spec(ExpressionSpec expressionSpec) {
@@ -433,13 +423,7 @@ public final class ArbitraryBuilder<T> {
 	}
 
 	public <U> ArbitraryBuilder<U> map(Function<T, U> mapper) {
-		ArbitraryBuilder<T> copiedBuilder = this.copy();
-		Supplier<U> mappedResult = () -> {
-			T sample = copiedBuilder.sample();
-			return mapper.apply(sample);
-		};
-		return new ArbitraryBuilder<>(
-			mappedResult,
+		return new ArbitraryBuilder<>(() -> mapper.apply(this.sample()),
 			this.traverser,
 			this.generator,
 			this.validator,
@@ -452,11 +436,7 @@ public final class ArbitraryBuilder<T> {
 		ArbitraryBuilder<U> other,
 		BiFunction<T, U, R> combinator
 	) {
-		return new ArbitraryBuilder<>(() -> {
-			Arbitrary<T> sample = this.build();
-			Arbitrary<U> otherSample = other.build();
-			return combinator.apply(sample.sample(), otherSample.sample());
-		},
+		return new ArbitraryBuilder<>(() -> combinator.apply(this.sample(), other.sample()),
 			this.traverser,
 			this.generator,
 			this.validator,
