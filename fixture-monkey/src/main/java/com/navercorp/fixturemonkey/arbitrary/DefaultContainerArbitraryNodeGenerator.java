@@ -13,8 +13,9 @@ import com.navercorp.fixturemonkey.generator.FieldNameResolver;
 public class DefaultContainerArbitraryNodeGenerator implements ContainerArbitraryNodeGenerator {
 	public static final DefaultContainerArbitraryNodeGenerator INSTANCE = new DefaultContainerArbitraryNodeGenerator();
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public <T, U> List<ArbitraryNode<U>> generate(
+	public <T> List<ArbitraryNode<?>> generate(
 		ArbitraryNode<T> nowNode,
 		FieldNameResolver fieldNameResolver
 	) {
@@ -24,9 +25,9 @@ public class DefaultContainerArbitraryNodeGenerator implements ContainerArbitrar
 		ArbitraryType<T> clazz = nowNode.getType();
 		LazyValue<T> lazyValue = nowNode.getValue();
 		String fieldName = nowNode.getFieldName();
-		ArbitraryType<U> elementType = clazz.getGenericFixtureType(0);
+		ArbitraryType<?> elementType = clazz.getGenericFixtureType(0);
 
-		List<ArbitraryNode<U>> generatedNodeList = new ArrayList<>();
+		List<ArbitraryNode<?>> generatedNodeList = new ArrayList<>();
 
 		if (lazyValue != null) {
 			if (lazyValue.isEmpty()) {
@@ -39,7 +40,7 @@ public class DefaultContainerArbitraryNodeGenerator implements ContainerArbitrar
 				throw new IllegalArgumentException(
 					"Unsupported container type is given. " + value.getClass().getName());
 			}
-			Iterator<U> iterator = getIterator(value);
+			Iterator<?> iterator = getIterator(value);
 
 			ContainerSizeConstraint containerSizeConstraint = nowNode.getContainerSizeConstraint();
 			if (containerSizeConstraint != null) {
@@ -48,8 +49,8 @@ public class DefaultContainerArbitraryNodeGenerator implements ContainerArbitrar
 			}
 
 			while (currentIndex < elementSize && iterator.hasNext()) {
-				U nextObject = iterator.next();
-				ArbitraryNode<U> nextNode = ArbitraryNode.<U>builder()
+				Object nextObject = iterator.next();
+				ArbitraryNode<?> nextNode = ArbitraryNode.builder()
 					.type(elementType)
 					.value(nextObject)
 					.fieldName(fieldName)
@@ -73,7 +74,7 @@ public class DefaultContainerArbitraryNodeGenerator implements ContainerArbitrar
 		}
 
 		for (int i = currentIndex; i < elementSize; i++) {
-			ArbitraryNode<U> nextNode = ArbitraryNode.<U>builder()
+			ArbitraryNode<?> nextNode = ArbitraryNode.builder()
 				.type(elementType)
 				.fieldName(fieldName)
 				.indexOfIterable(i)

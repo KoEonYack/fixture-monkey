@@ -211,6 +211,7 @@ public final class ArbitraryTraverser {
 			.orElseThrow(() -> new IllegalArgumentException("Class is not registered " + clazz.getName()));
 	}
 
+	@SuppressWarnings("unchecked")
 	private <T, K, V> void mapArbitrary(ArbitraryNode<T> currentNode, FieldNameResolver fieldNameResolver) {
 		LazyValue<T> lazyValue = currentNode.getValue();
 		if (lazyValue != null) {
@@ -232,7 +233,7 @@ public final class ArbitraryTraverser {
 		}
 
 		for (int i = 0; i < elementSize; i++) {
-			ArbitraryNode<K> keyFrame = ArbitraryNode.<K>builder()
+			ArbitraryNode<K> keyFrame = ArbitraryNode.builder()
 				.type(keyType)
 				.fieldName(fieldName)
 				.indexOfIterable(i)
@@ -244,7 +245,7 @@ public final class ArbitraryTraverser {
 			currentNode.addChildNode(keyFrame);
 			doTraverse(keyFrame, true, true, fieldNameResolver);
 
-			ArbitraryNode<V> valueFrame = ArbitraryNode.<V>builder()
+			ArbitraryNode<V> valueFrame = ArbitraryNode.builder()
 				.type(valueType)
 				.fieldName(fieldName)
 				.indexOfIterable(i)
@@ -257,14 +258,14 @@ public final class ArbitraryTraverser {
 		}
 	}
 
-	private <T, U> void traverseContainer(
+	private <T> void traverseContainer(
 		ArbitraryNode<T> currentNode,
 		boolean active,
 		FieldNameResolver fieldNameResolver,
 		ContainerArbitraryNodeGenerator containerArbitraryNodeGenerator
 	) {
-		List<ArbitraryNode<U>> nodes = containerArbitraryNodeGenerator.generate(currentNode, fieldNameResolver);
-		for (ArbitraryNode<U> node : nodes) {
+		List<ArbitraryNode<?>> nodes = containerArbitraryNodeGenerator.generate(currentNode, fieldNameResolver);
+		for (ArbitraryNode<?> node : nodes) {
 			currentNode.addChildNode(node);
 			// TODO: map일 때 key 처리
 			doTraverse(node, false, active, fieldNameResolver);

@@ -102,7 +102,7 @@ public final class ArbitraryBuilder<T> {
 		);
 	}
 
-	@SuppressWarnings({"rawtypes"})
+	@SuppressWarnings({"unchecked", "rawtypes"})
 	private ArbitraryBuilder(
 		Supplier<T> valueSupplier,
 		ArbitraryTraverser traverser,
@@ -112,7 +112,7 @@ public final class ArbitraryBuilder<T> {
 		Map<Class<?>, ArbitraryGenerator> generatorMap
 	) {
 		this(
-			ArbitraryNode.<T>builder()
+			ArbitraryNode.builder()
 				.value(valueSupplier)
 				.fieldName("HEAD_NAME")
 				.build(),

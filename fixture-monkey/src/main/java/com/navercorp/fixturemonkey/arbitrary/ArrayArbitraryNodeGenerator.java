@@ -13,7 +13,7 @@ public class ArrayArbitraryNodeGenerator implements ContainerArbitraryNodeGenera
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T, U> List<ArbitraryNode<U>> generate(
+	public <T> List<ArbitraryNode<?>> generate(
 		ArbitraryNode<T> nowNode,
 		FieldNameResolver fieldNameResolver
 	) {
@@ -21,11 +21,11 @@ public class ArrayArbitraryNodeGenerator implements ContainerArbitraryNodeGenera
 		int currentIndex = 0;
 
 		ArbitraryType<T> clazz = nowNode.getType();
-		ArbitraryType<U> childType = clazz.getArrayFixtureType();
+		ArbitraryType<?> childType = clazz.getArrayFixtureType();
 		String fieldName = nowNode.getFieldName();
 		LazyValue<T> lazyValue = nowNode.getValue();
 
-		List<ArbitraryNode<U>> generatedNodeList = new ArrayList<>();
+		List<ArbitraryNode<?>> generatedNodeList = new ArrayList<>();
 
 		if (lazyValue != null) {
 			T value = lazyValue.get();
@@ -43,8 +43,8 @@ public class ArrayArbitraryNodeGenerator implements ContainerArbitraryNodeGenera
 			}
 
 			for (currentIndex = 0; currentIndex < length && currentIndex < elementSize; currentIndex++) {
-				U nextValue = (U)Array.get(value, currentIndex);
-				ArbitraryNode<U> nextNode = ArbitraryNode.<U>builder()
+				Object nextValue = Array.get(value, currentIndex);
+				ArbitraryNode<?> nextNode = ArbitraryNode.builder()
 					.type(childType)
 					.fieldName(fieldName)
 					.indexOfIterable(currentIndex)
@@ -67,7 +67,7 @@ public class ArrayArbitraryNodeGenerator implements ContainerArbitraryNodeGenera
 		}
 
 		for (int i = currentIndex; i < elementSize; i++) {
-			ArbitraryNode<U> genericFrame = ArbitraryNode.<U>builder()
+			ArbitraryNode<?> genericFrame = ArbitraryNode.builder()
 				.type(childType)
 				.fieldName(fieldName)
 				.indexOfIterable(i)
