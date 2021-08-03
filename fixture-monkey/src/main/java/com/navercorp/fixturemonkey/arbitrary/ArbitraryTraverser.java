@@ -2,7 +2,6 @@ package com.navercorp.fixturemonkey.arbitrary;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedType;
-import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
@@ -88,7 +87,7 @@ public final class ArbitraryTraverser {
 			if (containerArbitraryNodeGenerator != null) {
 				traverseContainer(node, active, fieldNameResolver, containerArbitraryNodeGenerator);
 			} else if (nowNodeType.isMap() || nowNodeType.isMapEntry()) {
-				mapArbitrary(node, fieldNameResolver);
+				traverseContainer(node, active, fieldNameResolver, MapArbitraryNodeGenerator.INSTANCE);
 			} else if (nowNodeType.isArray()) {
 				traverseContainer(node, active, fieldNameResolver, ArrayArbitraryNodeGenerator.INSTANCE);
 			} else if (nowNodeType.isOptional()) {
@@ -215,53 +214,6 @@ public final class ArbitraryTraverser {
 			.orElseThrow(() -> new IllegalArgumentException("Class is not registered " + clazz.getName()));
 	}
 
-	@SuppressWarnings("unchecked")
-	private <T, K, V> void mapArbitrary(ArbitraryNode<T> currentNode, FieldNameResolver fieldNameResolver) {
-		LazyValue<T> lazyValue = currentNode.getValue();
-		if (lazyValue != null) {
-			currentNode.setArbitrary(Arbitraries.just(lazyValue.get()));
-			return;
-		}
-		ArbitraryType<T> clazz = currentNode.getType();
-		String fieldName = currentNode.getFieldName();
-
-		ArbitraryType<K> keyType = clazz.getGenericFixtureType(0);
-		ArbitraryType<V> valueType = clazz.getGenericFixtureType(1);
-
-		currentNode.initializeElementSize();
-
-		int elementSize = currentNode.getContainerSizeConstraint().getArbitraryElementSize();
-
-		if (clazz.isMapEntry()) {
-			elementSize = 1;
-		}
-
-		for (int i = 0; i < elementSize; i++) {
-			ArbitraryNode<K> keyFrame = ArbitraryNode.builder()
-				.type(keyType)
-				.fieldName(fieldName)
-				.indexOfIterable(i)
-				.keyOfMapStructure(true)
-				.nullable(false)
-				.nullInject(0.f)
-				.build();
-
-			currentNode.addChildNode(keyFrame);
-			doTraverse(keyFrame, true, true, fieldNameResolver);
-
-			ArbitraryNode<V> valueFrame = ArbitraryNode.builder()
-				.type(valueType)
-				.fieldName(fieldName)
-				.indexOfIterable(i)
-				.nullable(false)
-				.nullInject(0.f)
-				.build();
-
-			currentNode.addChildNode(valueFrame);
-			doTraverse(valueFrame, false, true, fieldNameResolver);
-		}
-	}
-
 	private <T> void traverseContainer(
 		ArbitraryNode<T> currentNode,
 		boolean active,
@@ -271,8 +223,7 @@ public final class ArbitraryTraverser {
 		List<ArbitraryNode<?>> nodes = containerArbitraryNodeGenerator.generate(currentNode, fieldNameResolver);
 		for (ArbitraryNode<?> node : nodes) {
 			currentNode.addChildNode(node);
-			// TODO: map일 때 key 처리
-			doTraverse(node, false, active, fieldNameResolver);
+			doTraverse(node, node.isKeyOfMapStructure(), active, fieldNameResolver);
 		}
 	}
 
