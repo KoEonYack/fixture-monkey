@@ -54,6 +54,8 @@ public final class ArbitraryTraverser {
 		LazyValue<T> nowValue = node.getValue();
 		ArbitraryType<T> nowNodeType = node.getType();
 		Class<?> clazz = nowNodeType.getType();
+		ContainerArbitraryNodeGenerator containerArbitraryNodeGenerator =
+			arbitraryOption.getContainerArbitraryNodeGenerator(nowNodeType.getType());
 
 		if (isTraversable(nowNodeType)) {
 			List<Field> fields = getFields(clazz);
@@ -82,8 +84,10 @@ public final class ArbitraryTraverser {
 				node.addChildNode(nextNode);
 				doTraverse(nextNode, false, active, fieldNameResolver);
 			}
-		} else if (nowNodeType.isContainer()) {
-			if (nowNodeType.isMap() || nowNodeType.isMapEntry()) {
+		} else if (nowNodeType.isContainer() || containerArbitraryNodeGenerator != null) {
+			if (containerArbitraryNodeGenerator != null) {
+				traverseContainer(node, active, fieldNameResolver, containerArbitraryNodeGenerator);
+			} else if (nowNodeType.isMap() || nowNodeType.isMapEntry()) {
 				mapArbitrary(node, fieldNameResolver);
 			} else if (nowNodeType.isArray()) {
 				traverseContainer(node, active, fieldNameResolver, ArrayArbitraryNodeGenerator.INSTANCE);
@@ -284,6 +288,7 @@ public final class ArbitraryTraverser {
 
 		return arbitraryOption.isExceptGeneratePackage(clazz)
 			&& !arbitraryOption.isDefaultArbitraryType(clazz)
+			&& arbitraryOption.getContainerArbitraryNodeGenerator(clazz) == null
 			&& !type.isContainer()
 			&& !type.isOptional()
 			&& !type.isEnum()

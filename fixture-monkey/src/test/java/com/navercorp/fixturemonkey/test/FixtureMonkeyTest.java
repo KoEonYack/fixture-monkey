@@ -35,11 +35,15 @@ import com.navercorp.fixturemonkey.ArbitraryBuilder;
 import com.navercorp.fixturemonkey.ArbitraryBuilders;
 import com.navercorp.fixturemonkey.ArbitraryOption;
 import com.navercorp.fixturemonkey.FixtureMonkey;
+import com.navercorp.fixturemonkey.arbitrary.ArbitraryNode;
+import com.navercorp.fixturemonkey.arbitrary.ArbitraryType;
+import com.navercorp.fixturemonkey.arbitrary.ContainerArbitraryNodeGenerator;
 import com.navercorp.fixturemonkey.customizer.ArbitraryCustomizer;
 import com.navercorp.fixturemonkey.customizer.ExpressionSpec;
 import com.navercorp.fixturemonkey.generator.BeanArbitraryGenerator;
 import com.navercorp.fixturemonkey.generator.BuilderArbitraryGenerator;
 import com.navercorp.fixturemonkey.generator.FieldArbitraries;
+import com.navercorp.fixturemonkey.generator.FieldNameResolver;
 import com.navercorp.fixturemonkey.generator.FieldReflectionArbitraryGenerator;
 import com.navercorp.fixturemonkey.generator.NullArbitraryGenerator;
 
@@ -1907,6 +1911,20 @@ class FixtureMonkeyTest {
 		then(actual.values).allMatch(it -> it.value.equals("definition"));
 	}
 
+	@Property
+	void customContainerArbitraryNode() {
+		FixtureMonkey sut = FixtureMonkey.builder()
+			.putContainerArbitraryNodeGenerator(CustomTriple.class, CustomTripleArbitraryNodeGenerator.INSTNACE)
+			.defaultNotNull(true)
+			.build();
+
+		CustomTripleWrapper actual = sut.giveMeOne(CustomTripleWrapper.class);
+
+		then(actual.value.value1).isNotNull();
+		then(actual.value.value2).isNotNull();
+		then(actual.value.value3).isNotNull();
+	}
+
 	@Data
 	public static class IntegerWrapperClass {
 		int value;
@@ -2123,6 +2141,51 @@ class FixtureMonkeyTest {
 		public ArbitraryBuilder<StringWrapperClass> string(FixtureMonkey fixture) {
 			return fixture.giveMeBuilder(StringWrapperClass.class)
 				.set("value", "definition");
+		}
+	}
+
+	@Data
+	public static class CustomTripleWrapper {
+		CustomTriple<String, Integer, Float> value;
+	}
+
+	@Data
+	public static class CustomTriple<T, U, V> {
+		T value1;
+		U value2;
+		V value3;
+	}
+
+	public static class CustomTripleArbitraryNodeGenerator implements ContainerArbitraryNodeGenerator {
+		public static final CustomTripleArbitraryNodeGenerator INSTNACE = new CustomTripleArbitraryNodeGenerator();
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public <T> List<ArbitraryNode<?>> generate(ArbitraryNode<T> nowNode, FieldNameResolver fieldNameResolver) {
+			List<ArbitraryNode<?>> generatedArbitraryNodes = new ArrayList<>();
+			ArbitraryType<T> type = nowNode.getType();
+			ArbitraryType<?> firstChildType = type.getGenericFixtureType(0);
+			ArbitraryType<?> secondChildType = type.getGenericFixtureType(1);
+			ArbitraryType<?> thirdChildType = type.getGenericFixtureType(2);
+			generatedArbitraryNodes.add(
+				ArbitraryNode.builder()
+					.type(firstChildType)
+					.fieldName("value1")
+					.build()
+			);
+			generatedArbitraryNodes.add(
+				ArbitraryNode.builder()
+					.type(secondChildType)
+					.fieldName("value2")
+					.build()
+			);
+			generatedArbitraryNodes.add(
+				ArbitraryNode.builder()
+					.type(thirdChildType)
+					.fieldName("value3")
+					.build()
+			);
+			return generatedArbitraryNodes;
 		}
 	}
 }
