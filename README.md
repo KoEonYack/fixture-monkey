@@ -62,7 +62,7 @@ public class Order {
 ### Gradle
 
 ```groovy
-testImplementation("com.navercorp.fixturemonkey:fixture-monkey:0.1.11")
+testImplementation("com.navercorp.fixturemonkey:fixture-monkey:0.2.0")
 ```
 
 ### Maven
@@ -72,7 +72,7 @@ testImplementation("com.navercorp.fixturemonkey:fixture-monkey:0.1.11")
 <dependency>
     <groupId>com.navercorp.fixturemonkey</groupId>
     <artifactId>fixture-monkey</artifactId>
-    <version>0.1.11</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 
@@ -81,3 +81,4 @@ testImplementation("com.navercorp.fixturemonkey:fixture-monkey:0.1.11")
 * fixture-monkey-jackson
 * fixture-monkey-kotlin
 * fixture-monkey-autoparams
+* fixture-monkey-mockito
