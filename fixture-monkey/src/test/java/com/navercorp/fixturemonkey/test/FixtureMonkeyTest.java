@@ -1925,6 +1925,58 @@ class FixtureMonkeyTest {
 		then(actual.value.value3).isNotNull();
 	}
 
+	@Property
+	void acceptIfSetNull() {
+		ArbitraryBuilder<NestedStringWrapper> decomposedBuilder = this.sut.giveMeBuilder(NestedStringWrapper.class)
+			.set("value.value", Arbitraries.strings())
+			.acceptIf(
+				s -> true,
+				it -> it.setNull("value.value")
+			);
+
+		NestedStringWrapper actual = decomposedBuilder.sample();
+
+		then(actual.value.value).isNull();
+	}
+
+	@Property
+	void applySetNull() {
+		ArbitraryBuilder<NestedStringWrapper> decomposedBuilder = this.sut.giveMeBuilder(NestedStringWrapper.class)
+			.set("value.value", Arbitraries.strings())
+			.apply((value, it) -> it.setNull("value.value"));
+
+		NestedStringWrapper actual = decomposedBuilder.sample();
+
+		then(actual.value.value).isNull();
+	}
+
+	@Property
+	void applySetAfterSetNull() {
+		ArbitraryBuilder<NestedStringWrapper> decomposedBuilder = this.sut.giveMeBuilder(NestedStringWrapper.class)
+			.set("value.value", Arbitraries.strings())
+			.apply((value, it) -> it.setNull("value.value"))
+			.set("value.value", "test");
+
+		NestedStringWrapper actual = decomposedBuilder.sample();
+
+		then(actual.value.value).isEqualTo("test");
+	}
+
+	@Property
+	void acceptIfSetAfterSetNull() {
+		ArbitraryBuilder<NestedStringWrapper> decomposedBuilder = this.sut.giveMeBuilder(NestedStringWrapper.class)
+			.set("value.value", Arbitraries.strings())
+			.acceptIf(
+				s -> true,
+				it -> it.setNull("value.value")
+			)
+			.set("value.value", "test");
+
+		NestedStringWrapper actual = decomposedBuilder.sample();
+
+		then(actual.value.value).isEqualTo("test");
+	}
+
 	@Data
 	public static class IntegerWrapperClass {
 		int value;
@@ -2154,6 +2206,11 @@ class FixtureMonkeyTest {
 		T value1;
 		U value2;
 		V value3;
+	}
+
+	@Data
+	public static class NestedStringWrapper {
+		StringWrapperClass value;
 	}
 
 	public static class CustomTripleArbitraryNodeGenerator implements ContainerArbitraryNodeGenerator {

@@ -205,13 +205,12 @@ public final class ArbitraryBuilder<T> {
 	}
 
 	public ArbitraryBuilder<T> acceptIf(Predicate<T> predicate, Consumer<ArbitraryBuilder<T>> self) {
-		ArbitraryBuilder<T> copied = this.copy();
-
-		tree.getHead().setValue(() -> {
-			T sample = copied.sample();
+		applyToRootValue(builder -> {
+			T sample = builder.sample();
+			builder.tree.getHead().setValue(() -> sample); // fix builder value
 			if (predicate.test(sample)) {
-				self.accept(copied);
-				return copied.sample();
+				self.accept(builder);
+				return builder.sample();
 			}
 			return sample;
 		});
@@ -351,13 +350,11 @@ public final class ArbitraryBuilder<T> {
 	}
 
 	public ArbitraryBuilder<T> apply(BiConsumer<T, ArbitraryBuilder<T>> mapper) {
-		ArbitraryBuilder<T> copied = this.copy();
-
-		this.tree.getHead().setValue(() -> {
-			T sample = copied.sample();
-			copied.tree.getHead().setValue(() -> sample);
-			mapper.accept(sample, copied);
-			return copied.sample();
+		applyToRootValue(builder -> {
+			T sample = builder.sample();
+			builder.tree.getHead().setValue(() -> sample); // fix builder value
+			mapper.accept(sample, builder);
+			return builder.sample();
 		});
 
 		return this;
@@ -500,6 +497,12 @@ public final class ArbitraryBuilder<T> {
 			this.arbitraryCustomizers,
 			this.generatorMap
 		);
+	}
+
+	private void applyToRootValue(Function<ArbitraryBuilder<T>, T> valueSupplier) {
+		ArbitraryBuilder<T> copied = this.copy();
+		this.tree.getHead().setValue(() -> valueSupplier.apply(copied));
+		this.builderManipulators.clear();
 	}
 
 	public ArbitraryBuilder<T> copy() {

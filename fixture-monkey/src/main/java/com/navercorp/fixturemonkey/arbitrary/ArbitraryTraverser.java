@@ -120,7 +120,9 @@ public final class ArbitraryTraverser {
 		if (currentValue == null) {
 			return null;
 		}
-		return currentValue.isEmpty() ? null : new LazyValue<>(extractValue(currentValue.get(), field));
+		return currentValue.isEmpty()
+			? new LazyValue<>((Object)null)
+			: new LazyValue<>(extractValue(currentValue.get(), field));
 	}
 
 	@SuppressWarnings("unchecked")
