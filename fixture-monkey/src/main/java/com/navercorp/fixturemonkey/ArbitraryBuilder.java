@@ -269,7 +269,7 @@ public final class ArbitraryBuilder<T> {
 		Collection<ArbitraryNode> foundNodes = tree.findAll(arbitraryExpression);
 		for (ArbitraryNode foundNode : foundNodes) {
 			LazyValue<T> value = foundNode.getValue();
-			if (value != null && value.isEmpty()) { // decompose null value
+			if (!arbitraryNullity.toNull() && value != null && value.isEmpty()) { // decompose null value
 				foundNode.clearValue();
 				traverser.traverse(foundNode, foundNode.isKeyOfMapStructure(), generator);
 			} else {
