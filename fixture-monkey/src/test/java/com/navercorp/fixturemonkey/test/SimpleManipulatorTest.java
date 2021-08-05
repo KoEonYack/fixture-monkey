@@ -680,6 +680,19 @@ public class SimpleManipulatorTest {
 		then(actual.value2.value).isEqualTo(1);
 	}
 
+	@Property
+	void giveMeDecomposeNullSetNotNullReturnsNewValue() {
+		// given
+		StringWrapperClass decomposed = new StringWrapperClass();
+
+		// when
+		StringWrapperClass actual = this.sut.giveMeBuilder(decomposed)
+			.setNotNull("value")
+			.sample();
+
+		then(actual.value).isNotNull();
+	}
+
 	@Data
 	public static class IntegerWrapperClass {
 		int value;
