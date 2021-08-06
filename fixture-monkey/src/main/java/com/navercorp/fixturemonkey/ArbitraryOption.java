@@ -323,7 +323,7 @@ public final class ArbitraryOption {
 			Function<FixtureMonkey, ArbitraryBuilder<?>> arbitraryBuildingSupplier
 		) {
 			if (this.arbitraryBuildingSupplierMap.containsKey(clazz)) {
-				throw new IllegalArgumentException("can not register same class twice. " + clazz.getName());
+				throw new IllegalArgumentException("can not register same classes twice. " + clazz.getName());
 			}
 			this.arbitraryBuildingSupplierMap.put(clazz, arbitraryBuildingSupplier);
 			return this;
@@ -352,8 +352,7 @@ public final class ArbitraryOption {
 				} catch (InvocationTargetException
 					| InstantiationException
 					| IllegalAccessException
-					| NoSuchMethodException
-					| RuntimeException e) {
+					| NoSuchMethodException e) {
 					// ignored
 				}
 			}
