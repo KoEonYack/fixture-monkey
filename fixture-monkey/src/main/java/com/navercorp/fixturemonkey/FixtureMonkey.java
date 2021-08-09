@@ -39,6 +39,13 @@ public class FixtureMonkey {
 		options.applyArbitraryBuilders(this);
 	}
 
+	/**
+	 * Equivalent to {@code FixtureMonkey.builder().build()}
+	 */
+	public static FixtureMonkey create() {
+		return FixtureMonkey.builder().build();
+	}
+
 	public static FixtureMonkeyBuilder builder() {
 		return new FixtureMonkeyBuilder();
 	}
