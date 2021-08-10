@@ -383,6 +383,41 @@ public class ComplexManipulatorTest {
 		then(actual.values.get(actual.values.size() - 1)).isEqualTo(Integer.parseInt(actual.value));
 	}
 
+	@Property
+	void applyWithGroupNotSetAsRegisteredArbitrary() {
+		// given
+		FixtureMonkey sut = FixtureMonkey.builder()
+			.registerGroup(TestGroup.class)
+			.build();
+
+		// when
+		NestedStringWrapper actual = sut.giveMeBuilder(NestedStringWrapper.class)
+			.setNotNull("value.value")
+			.apply((value, builder) -> builder.set("value.value", "APPLY" + value.getValue().getValue()))
+			.sample();
+
+		then(actual.value.value).contains("APPLY");
+	}
+
+	@Property
+	void acceptIfWithGroupNotSetAsRegisteredArbitrary() {
+		// given
+		FixtureMonkey sut = FixtureMonkey.builder()
+			.registerGroup(TestGroup.class)
+			.build();
+
+		// when
+		NestedStringWrapper actual = sut.giveMeBuilder(NestedStringWrapper.class)
+			.setNotNull("value.value")
+			.acceptIf(
+				it -> it.getValue() != null,
+				builder -> builder.set("value.value", "ACCEPTIF")
+			)
+			.sample();
+
+		then(actual.value.value).contains("ACCEPTIF");
+	}
+
 	@Data
 	public static class IntegerListClass {
 		List<Integer> values;
@@ -428,6 +463,13 @@ public class ComplexManipulatorTest {
 
 		public boolean isEmpty() {
 			return value == null;
+		}
+	}
+
+	public class TestGroup {
+		public ArbitraryBuilder<NestedStringWrapper> nestedStringWrapper(FixtureMonkey fixtureMonkey) {
+			return fixtureMonkey.giveMeBuilder(NestedStringWrapper.class)
+				.set("value.value", "group");
 		}
 	}
 }
