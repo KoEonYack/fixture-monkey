@@ -368,6 +368,21 @@ public class ComplexManipulatorTest {
 		then(actual).isEqualTo("test");
 	}
 
+	@Property
+	void applySetWithDefault() {
+		// given
+		ArbitraryBuilder<StringIntegerListClass> defaultBuilder = this.sut.giveMeBuilder(StringIntegerListClass.class)
+			.set("value", Arbitraries.integers().map(String::valueOf))
+			.minSize("values", 1);
+
+		// when
+		StringIntegerListClass actual = defaultBuilder.apply(
+			(value, builder) -> builder.set("values[" + (value.values.size() - 1) + "]", Integer.parseInt(value.value))
+		).sample();
+
+		then(actual.values.get(actual.values.size() - 1)).isEqualTo(Integer.parseInt(actual.value));
+	}
+
 	@Data
 	public static class IntegerListClass {
 		List<Integer> values;

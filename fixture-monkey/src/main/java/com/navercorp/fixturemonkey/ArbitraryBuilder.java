@@ -208,6 +208,7 @@ public final class ArbitraryBuilder<T> {
 	public ArbitraryBuilder<T> acceptIf(Predicate<T> predicate, Consumer<ArbitraryBuilder<T>> self) {
 		applyToRootValue(builder -> {
 			T sample = builder.sample();
+			builder.builderManipulators.clear();
 			builder.tree.getHead().setValue(() -> sample); // fix builder value
 			if (predicate.test(sample)) {
 				self.accept(builder);
@@ -279,7 +280,7 @@ public final class ArbitraryBuilder<T> {
 		return this;
 	}
 
-	public ArbitraryBuilder<T> set(String expression, @Nullable Arbitrary<T> value) {
+	public ArbitraryBuilder<T> set(String expression, @Nullable Arbitrary<?> value) {
 		if (value == null) {
 			return this.setNull(expression);
 		}
@@ -359,6 +360,7 @@ public final class ArbitraryBuilder<T> {
 	public ArbitraryBuilder<T> apply(BiConsumer<T, ArbitraryBuilder<T>> mapper) {
 		applyToRootValue(builder -> {
 			T sample = builder.sample();
+			builder.builderManipulators.clear();
 			builder.tree.getHead().setValue(() -> sample); // fix builder value
 			mapper.accept(sample, builder);
 			return builder.sample();
