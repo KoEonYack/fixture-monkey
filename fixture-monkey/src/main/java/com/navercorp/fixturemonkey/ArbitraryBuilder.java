@@ -531,6 +531,7 @@ public final class ArbitraryBuilder<T> {
 		);
 	}
 
+	@Deprecated
 	public ExpressionSpec toExpressionSpec() {
 		return new ExpressionSpec(this.builderManipulators.stream()
 			.map(BuilderManipulator::copy)
