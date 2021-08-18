@@ -17,6 +17,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 
@@ -202,7 +203,11 @@ public final class ArbitraryBuilder<T> {
 	}
 
 	public List<T> sampleList(int size) {
-		return this.build().sampleStream().limit(size).collect(toList());
+		return this.sampleStream().limit(size).collect(toList());
+	}
+
+	public Stream<T> sampleStream() {
+		return this.build().sampleStream();
 	}
 
 	public ArbitraryBuilder<T> acceptIf(Predicate<T> predicate, Consumer<ArbitraryBuilder<T>> self) {
