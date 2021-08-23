@@ -73,6 +73,7 @@ public final class ArbitraryOption {
 	private final Map<Class<?>, ArbitraryBuilder<?>> defaultArbitraryBuilderMap;
 	private final Map<Class<?>, ContainerArbitraryNodeGenerator> containerArbitraryNodeGeneratorMap;
 	private final Set<String> exceptGeneratePackages;
+	private final Set<Class<?>> exceptGenerateClasses;
 	private final Set<String> nonNullAnnotationNames;
 	private final NullableArbitraryEvaluator nullableArbitraryEvaluator;
 	private final InterfaceSupplier<?> defaultInterfaceSupplier;
@@ -86,6 +87,7 @@ public final class ArbitraryOption {
 		Map<Class<?>, Function<FixtureMonkey, ArbitraryBuilder<?>>> arbitraryBuildingSupplierMap,
 		Map<Class<?>, ContainerArbitraryNodeGenerator> containerArbitraryNodeGeneratorMap,
 		Set<String> exceptGeneratePackages,
+		Set<Class<?>> exceptGenerateClasses,
 		Set<String> nonNullAnnotationNames,
 		InterfaceSupplier<?> defaultInterfaceSupplier,
 		NullableArbitraryEvaluator nullableArbitraryEvaluator,
@@ -99,6 +101,7 @@ public final class ArbitraryOption {
 		this.containerArbitraryNodeGeneratorMap = containerArbitraryNodeGeneratorMap;
 		this.defaultArbitraryBuilderMap = new HashMap<>();
 		this.exceptGeneratePackages = exceptGeneratePackages;
+		this.exceptGenerateClasses = exceptGenerateClasses;
 		this.nonNullAnnotationNames = nonNullAnnotationNames;
 		this.defaultInterfaceSupplier = defaultInterfaceSupplier;
 		this.nullableArbitraryEvaluator = nullableArbitraryEvaluator;
@@ -109,6 +112,10 @@ public final class ArbitraryOption {
 
 	public Set<String> getExceptGeneratePackages() {
 		return exceptGeneratePackages;
+	}
+
+	public Set<Class<?>> getExceptGenerateClasses() {
+		return exceptGenerateClasses;
 	}
 
 	public NullableArbitraryEvaluator getNullableArbitraryEvaluator() {
@@ -131,13 +138,17 @@ public final class ArbitraryOption {
 		return annotatedArbitraryMap.containsKey(clazz);
 	}
 
-	public <T> boolean isExceptGeneratePackage(Class<T> clazz) {
+	public <T> boolean isExceptGeneratablePackage(Class<T> clazz) {
 		if (clazz.getPackage() == null) {
 			return false; // primitive
 		}
 		String packageName = clazz.getPackage().getName();
 		return exceptGeneratePackages.stream()
 			.noneMatch(packageName::startsWith);
+	}
+
+	public <T> boolean isGeneratableClass(Class<T> clazz) {
+		return !exceptGenerateClasses.contains(clazz);
 	}
 
 	public Map<Class<?>, InterfaceSupplier<?>> getInterfaceSupplierMap() {
@@ -258,6 +269,7 @@ public final class ArbitraryOption {
 		private final Map<Class<?>, ContainerArbitraryNodeGenerator> containerArbitraryNodeGeneratorMap =
 			new HashMap<>();
 		private Set<String> exceptGeneratePackages = new HashSet<>(DEFAULT_EXCEPT_GENERATE_PACKAGE);
+		private Set<Class<?>> exceptGenerateClasses = new HashSet<>();
 		private final Set<String> nonNullAnnotationNames = new HashSet<>(DEFAULT_NONNULL_ANNOTATIONS);
 		private NullableArbitraryEvaluator nullableArbitraryEvaluator = new NullableArbitraryEvaluator() {
 		};
@@ -271,8 +283,18 @@ public final class ArbitraryOption {
 			return this;
 		}
 
+		public <T> FixtureOptionsBuilder addExceptGenerateClass(Class<T> clazz) {
+			this.exceptGenerateClasses.add(clazz);
+			return this;
+		}
+
 		public FixtureOptionsBuilder exceptGeneratePackages(Set<String> exceptGeneratePackages) {
 			this.exceptGeneratePackages = exceptGeneratePackages;
+			return this;
+		}
+
+		public FixtureOptionsBuilder exceptGenerateClasses(Set<Class<?>> exceptGenerateClasses) {
+			this.exceptGenerateClasses = exceptGenerateClasses;
 			return this;
 		}
 
@@ -386,6 +408,7 @@ public final class ArbitraryOption {
 				Collections.unmodifiableMap(arbitraryBuildingSupplierMap),
 				Collections.unmodifiableMap(containerArbitraryNodeGeneratorMap),
 				Collections.unmodifiableSet(exceptGeneratePackages),
+				Collections.unmodifiableSet(exceptGenerateClasses),
 				Collections.unmodifiableSet(nonNullAnnotationNames),
 				defaultInterfaceSupplier,
 				nullableArbitraryEvaluator,
