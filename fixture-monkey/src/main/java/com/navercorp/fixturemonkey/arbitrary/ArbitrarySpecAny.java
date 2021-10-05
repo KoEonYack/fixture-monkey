@@ -22,8 +22,17 @@ import static java.util.stream.Collectors.toList;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+
+import org.junit.platform.engine.TestDescriptor;
+import org.junit.platform.engine.UniqueId;
+import org.junit.platform.engine.support.descriptor.AbstractTestDescriptor;
 
 import net.jqwik.api.Arbitraries;
+import net.jqwik.api.JqwikException;
+import net.jqwik.api.Shrinkable;
+import net.jqwik.engine.SourceOfRandomness;
+import net.jqwik.engine.execution.lifecycle.CurrentTestDescriptor;
 
 import com.navercorp.fixturemonkey.ArbitraryBuilder;
 import com.navercorp.fixturemonkey.customizer.ExpressionSpec;
@@ -35,10 +44,38 @@ public final class ArbitrarySpecAny implements BuilderManipulator {
 		this.specs = specs;
 	}
 
+	private static final TestDescriptor SAMPLE_DESCRIPTOR = new AbstractTestDescriptor(
+		UniqueId.root("fixture-monkey", "samples"),
+		"sample descriptor for fixture-monkey"
+	) {
+		@Override
+		public Type getType() {
+			return Type.TEST;
+		}
+	};
+
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	@Override
 	public void accept(ArbitraryBuilder arbitraryBuilder) {
-		ExpressionSpec spec = Arbitraries.of(specs).sample();
+		ExpressionSpec spec = CurrentTestDescriptor.isEmpty()
+			? CurrentTestDescriptor.runWithDescriptor(SAMPLE_DESCRIPTOR, () ->
+			Arbitraries.of(specs)
+				.generator(1000, false)
+				.stream(SourceOfRandomness.current())
+				.map(Shrinkable::value)
+				.map(Optional::ofNullable)
+				.findFirst()
+				.orElseThrow(() -> new JqwikException("Cannot generate a value"))
+				.orElse(null)
+		)
+			: Arbitraries.of(specs)
+			.generator(1000, false)
+			.stream(SourceOfRandomness.current())
+			.map(Shrinkable::value)
+			.map(Optional::ofNullable)
+			.findFirst()
+			.orElseThrow(() -> new JqwikException("Cannot generate a value"))
+			.orElse(null);
 		List<BuilderManipulator> specArbitraryManipulators = spec.getBuilderManipulators();
 		arbitraryBuilder.apply(specArbitraryManipulators);
 	}

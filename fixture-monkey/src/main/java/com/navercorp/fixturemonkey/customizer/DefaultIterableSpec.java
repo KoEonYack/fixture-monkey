@@ -23,10 +23,18 @@ import static com.navercorp.fixturemonkey.Constants.DEFAULT_ELEMENT_MIN_SIZE;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import org.junit.platform.engine.TestDescriptor;
+import org.junit.platform.engine.UniqueId;
+import org.junit.platform.engine.support.descriptor.AbstractTestDescriptor;
+
 import net.jqwik.api.Arbitraries;
+import net.jqwik.api.JqwikException;
+import net.jqwik.api.Shrinkable;
+import net.jqwik.engine.SourceOfRandomness;
 
 final class DefaultIterableSpec implements IterableSpec, ExpressionSpecVisitor {
 	private static final String EMPTY_FIELD = "";
@@ -217,8 +225,25 @@ final class DefaultIterableSpec implements IterableSpec, ExpressionSpecVisitor {
 	}
 
 	private long getRandomLimit() {
-		return Arbitraries.longs().between(this.minSize, this.maxSize).sample();
+		return Arbitraries.longs().between(this.minSize, this.maxSize)
+			.generator(1000, false)
+			.stream(SourceOfRandomness.current())
+			.map(Shrinkable::value)
+			.map(Optional::ofNullable)
+			.findFirst()
+			.orElseThrow(() -> new JqwikException("Cannot generate a value"))
+			.orElse(null);
 	}
+
+	private static final TestDescriptor SAMPLE_DESCRIPTOR = new AbstractTestDescriptor(
+		UniqueId.root("fixture-monkey", "samples"),
+		"sample descriptor for fixture-monkey"
+	) {
+		@Override
+		public Type getType() {
+			return Type.TEST;
+		}
+	};
 
 	private static class IterableSpecSet<T> {
 		private final String expression;

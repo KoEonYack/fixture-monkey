@@ -315,6 +315,7 @@ final class ArbitraryValue<T> implements Arbitrary<T> {
 	public synchronized Stream<T> sampleStream() {
 		try {
 			Arbitrary<T> arbitrary = getArbitrary()
+				.withoutEdgeCases()
 				.filter((Predicate<T>)this.validateFilter(validOnly));
 			RandomGenerator<T> generator = this.runInDescriptor(
 				() -> arbitrary.generator(JqwikProperties.DEFAULT_TRIES, false)
