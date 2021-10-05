@@ -37,7 +37,9 @@ import net.jqwik.api.Arbitrary;
 import net.jqwik.api.EdgeCases;
 import net.jqwik.api.EdgeCases.Config;
 import net.jqwik.api.ExhaustiveGenerator;
+import net.jqwik.api.JqwikException;
 import net.jqwik.api.RandomGenerator;
+import net.jqwik.api.Shrinkable;
 import net.jqwik.api.TooManyFilterMissesException;
 import net.jqwik.api.Tuple.Tuple1;
 import net.jqwik.api.Tuple.Tuple2;
@@ -49,6 +51,8 @@ import net.jqwik.api.arbitraries.IteratorArbitrary;
 import net.jqwik.api.arbitraries.ListArbitrary;
 import net.jqwik.api.arbitraries.SetArbitrary;
 import net.jqwik.api.arbitraries.StreamArbitrary;
+import net.jqwik.engine.JqwikProperties;
+import net.jqwik.engine.SourceOfRandomness;
 
 import com.navercorp.fixturemonkey.validator.ArbitraryValidator;
 
@@ -296,9 +300,11 @@ final class ArbitraryValue<T> implements Arbitrary<T> {
 	@Override
 	public synchronized Stream<T> sampleStream() {
 		try {
-			return getArbitrary()
-				.filter((Predicate<T>)this.validateFilter(validOnly))
-				.sampleStream();
+			Arbitrary<T> arbitrary = getArbitrary()
+				.filter((Predicate<T>)this.validateFilter(validOnly));
+			return arbitrary.generator(JqwikProperties.DEFAULT_TRIES, false)
+				.stream(SourceOfRandomness.current())
+				.map(Shrinkable::value);
 		} finally {
 			this.arbitrary = null; // in order to getting new value whenever sampling, set arbitrary as null
 		}
@@ -308,9 +314,11 @@ final class ArbitraryValue<T> implements Arbitrary<T> {
 	@Override
 	public synchronized T sample() {
 		try {
-			return (T)getArbitrary()
-				.filter(this.validateFilter(validOnly))
-				.sample();
+			return this.sampleStream()
+				.map(Optional::ofNullable)
+				.findFirst()
+				.orElseThrow(() -> new JqwikException("Cannot generate a value"))
+				.orElse(null);
 		} catch (TooManyFilterMissesException ex) {
 			StringBuilder builder = new StringBuilder();
 			this.violations.values().forEach(violation -> builder
