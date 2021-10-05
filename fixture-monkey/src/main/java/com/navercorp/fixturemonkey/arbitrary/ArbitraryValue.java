@@ -30,6 +30,9 @@ import java.util.stream.Stream;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 
+import org.junit.platform.engine.TestDescriptor;
+import org.junit.platform.engine.UniqueId;
+import org.junit.platform.engine.support.descriptor.AbstractTestDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +56,7 @@ import net.jqwik.api.arbitraries.SetArbitrary;
 import net.jqwik.api.arbitraries.StreamArbitrary;
 import net.jqwik.engine.JqwikProperties;
 import net.jqwik.engine.SourceOfRandomness;
+import net.jqwik.engine.execution.lifecycle.CurrentTestDescriptor;
 
 import com.navercorp.fixturemonkey.validator.ArbitraryValidator;
 
@@ -66,6 +70,16 @@ final class ArbitraryValue<T> implements Arbitrary<T> {
 	private final Map<String, ConstraintViolation> violations;
 	private final Logger log = LoggerFactory.getLogger(this.getClass());
 	private Exception lastException;
+
+	private static final TestDescriptor SAMPLE_DESCRIPTOR = new AbstractTestDescriptor(
+		UniqueId.root("fixture-monkey", "samples"),
+		"sample descriptor for fixture-monkey"
+	) {
+		@Override
+		public Type getType() {
+			return Type.TEST;
+		}
+	};
 
 	@SuppressWarnings("rawtypes")
 	public ArbitraryValue(
@@ -300,11 +314,21 @@ final class ArbitraryValue<T> implements Arbitrary<T> {
 	@Override
 	public synchronized Stream<T> sampleStream() {
 		try {
-			Arbitrary<T> arbitrary = getArbitrary()
-				.filter((Predicate<T>)this.validateFilter(validOnly));
-			return arbitrary.generator(JqwikProperties.DEFAULT_TRIES, false)
-				.stream(SourceOfRandomness.current())
-				.map(Shrinkable::value);
+			if (CurrentTestDescriptor.isEmpty()) {
+				return CurrentTestDescriptor.runWithDescriptor(SAMPLE_DESCRIPTOR, () -> {
+					Arbitrary<T> arbitrary = getArbitrary()
+						.filter((Predicate<T>)this.validateFilter(validOnly));
+					return arbitrary.generator(JqwikProperties.DEFAULT_TRIES, false)
+						.stream(SourceOfRandomness.current())
+						.map(Shrinkable::value);
+				});
+			} else {
+				Arbitrary<T> arbitrary = getArbitrary()
+					.filter((Predicate<T>)this.validateFilter(validOnly));
+				return arbitrary.generator(JqwikProperties.DEFAULT_TRIES, false)
+					.stream(SourceOfRandomness.current())
+					.map(Shrinkable::value);
+			}
 		} finally {
 			this.arbitrary = null; // in order to getting new value whenever sampling, set arbitrary as null
 		}
