@@ -314,21 +314,13 @@ final class ArbitraryValue<T> implements Arbitrary<T> {
 	@Override
 	public synchronized Stream<T> sampleStream() {
 		try {
-			if (CurrentTestDescriptor.isEmpty()) {
-				return CurrentTestDescriptor.runWithDescriptor(SAMPLE_DESCRIPTOR, () -> {
-					Arbitrary<T> arbitrary = getArbitrary()
-						.filter((Predicate<T>)this.validateFilter(validOnly));
-					return arbitrary.generator(JqwikProperties.DEFAULT_TRIES, false)
-						.stream(SourceOfRandomness.current())
-						.map(Shrinkable::value);
-				});
-			} else {
-				Arbitrary<T> arbitrary = getArbitrary()
-					.filter((Predicate<T>)this.validateFilter(validOnly));
-				return arbitrary.generator(JqwikProperties.DEFAULT_TRIES, false)
-					.stream(SourceOfRandomness.current())
-					.map(Shrinkable::value);
-			}
+			Arbitrary<T> arbitrary = getArbitrary()
+				.filter((Predicate<T>)this.validateFilter(validOnly));
+			RandomGenerator<T> generator = this.runInDescriptor(
+				() -> arbitrary.generator(JqwikProperties.DEFAULT_TRIES, false)
+			);
+			return Stream.generate(() -> this.runInDescriptor(() -> generator.next(SourceOfRandomness.current())))
+				.map(it -> this.runInDescriptor(it::value));
 		} finally {
 			this.arbitrary = null; // in order to getting new value whenever sampling, set arbitrary as null
 		}
@@ -495,5 +487,13 @@ final class ArbitraryValue<T> implements Arbitrary<T> {
 	@SuppressWarnings("unchecked")
 	private <U> Arbitrary<U> convert(Arbitrary<T> arbitrary, Function<Arbitrary<T>, Arbitrary<U>> mapper) {
 		return mapper.apply(arbitrary.filter(validateFilter(validOnly)));
+	}
+
+	private <R> R runInDescriptor(Supplier<R> supplier) {
+		if (CurrentTestDescriptor.isEmpty()) {
+			return CurrentTestDescriptor.runWithDescriptor(SAMPLE_DESCRIPTOR, supplier);
+		} else {
+			return supplier.get();
+		}
 	}
 }
